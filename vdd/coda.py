@@ -62,6 +62,57 @@ class CODA(object):
         return array
 
 
+class CODACharacteristic(object):
+
+    _default_limits = (0.0, 1.0)
+
+    def __init__(self, name, limits=None, value=None):
+        self.name = name
+        if limits is not None:
+            self.limits = limits
+        if value is not None:
+            self.value = value
+
+    @property
+    def limits(self):
+        # TODO: Consider exposing limits elements (llim & ulim) also.
+        try:
+            return self._limits
+        except AttributeError:
+            self._limits = self._default_limits
+            return self._limits
+    @limits.setter
+    def limits(self, value):
+        if isinstance(value, (tuple, list)) and len(value) == 2:
+            self._limits = tuple(value)
+
+    @property
+    def value(self):
+        """Characteristic parameter value."""
+        # TODO: Support units, e.g. via pint
+        try:
+            return self._value
+        except AttributeError:
+            raise AttributeError("value not set.")
+    @value.setter
+    def value(self, x):
+        llim, ulim = self.limits
+
+        msg_base = "value must satisfy {}x{}"
+        msg = msg_base.format(
+            '{} <= '.format(llim) if llim is not None else '',
+            ' <= {}'.format(ulim) if ulim is not None else ''
+        )
+
+        if llim is not None and x < llim:
+            raise ValueError(msg)
+
+        if ulim is not None and x > ulim:
+            raise ValueError(msg)
+
+        self._value = x
+
+
 class CODARelationship(object):
     """Relationship between a requirement and characteristic.
 

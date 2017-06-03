@@ -49,6 +49,52 @@ class TestCODA(unittest.TestCase):
 
 
 @ddt
+class TestCODACharacteristic(unittest.TestCase):
+
+    def setUp(self):
+        class CODACharacteristic(coda.CODACharacteristic):
+            def __init__(self):
+                pass
+        self.inst = CODACharacteristic()
+
+    def test___init____omit_value(self):
+        """Omitting the value on instantiation is valid.
+
+        When modelling a set of designs (typical) we don't necessarily
+        want to seed the model with characteristic values.
+        """
+        inst = coda.CODACharacteristic('Name')
+        # This might want to be None? Requires everything supporting
+        # that as an input though.
+        self.assertRaises(AttributeError, getattr, inst, 'value')
+
+    @data(
+        (-0.01, ValueError),
+        (0.0, None),
+        (0.5, None),
+        (1.0, None),
+        (1.01, ValueError),
+    )
+    @unpack
+    def test_value__set_with_default_limits(self, value, exception):
+        if exception is not None:
+            self.assertRaises(exception, setattr, self.inst, 'value',
+                              value)
+
+        else:
+            self.inst.value = value
+            self.assertEqual(self.inst.value, value)
+
+    def test_limits__get__default(self):
+        self.assertEqual(self.inst.limits, self.inst._default_limits)
+
+    @data((0.0, 1.0), [0.0, 1.0], (None, None), (0, None), (None, 1))
+    def test_limits__set__valid(self, value):
+        self.inst.limits = value
+        self.assertEqual(self.inst.limits, tuple(value))
+
+
+@ddt
 class TestCODARelationship(unittest.TestCase):
 
     def setUp(self):
