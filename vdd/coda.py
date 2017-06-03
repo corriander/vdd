@@ -67,6 +67,16 @@ class CODACharacteristic(object):
     _default_limits = (0.0, 1.0)
 
     def __init__(self, name, limits=None, value=None):
+        """
+            name: str
+                Identifier/description
+
+            limits: 2-tuple (or list)
+                Constrains the value.
+
+            value: real
+                Characteristic parameter value, e.g. mass.
+        """
         self.name = name
         if limits is not None:
             self.limits = limits
@@ -111,6 +121,30 @@ class CODACharacteristic(object):
             raise ValueError(msg)
 
         self._value = x
+
+
+class CODARequirement(object):
+
+    def __init__(self, name, weight=1.0):
+        """
+            name: str
+                Identifier/description
+
+            weight: fraction (0.0 - 1.0)
+                Normalised importance weighting.
+        """
+
+        self.name = name	# Duplication with Characteristic
+        self.weight = weight
+
+    @property
+    def weight(self):
+        return self._weight
+    @weight.setter
+    def weight(self, x):
+        if x > 1 or x < 0:
+            raise ValueError("Weight must be normalised 0 <= x <= 1.")
+        self._weight = x
 
 
 class CODARelationship(object):

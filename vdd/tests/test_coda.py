@@ -95,6 +95,32 @@ class TestCODACharacteristic(unittest.TestCase):
 
 
 @ddt
+class TestCODARequirement(unittest.TestCase):
+
+    def setUp(self):
+        class CODARequirement(coda.CODARequirement):
+            def __init__(self):
+                pass
+        self.inst = CODARequirement()
+
+    @data((-0.01, False), (0.0, True), (0.5, True), (1.0, True),
+          (1.1, False))
+    @unpack
+    def test_weight__set(self, wt, valid):
+        # Prototypes used context to allow weights to be provided in a
+        # non-normalised form and this property would handle the
+        # normalisation by inspecting the weights of other
+        # requirements. This functionality isn't implemented here, but
+        # might still be useful.
+        if not valid:
+            self.assertRaises(ValueError, setattr, self.inst,
+                              'weight', wt)
+        else:
+            self.inst.weight = wt
+            self.assertEqual(self.inst.weight, wt)
+
+
+@ddt
 class TestCODARelationship(unittest.TestCase):
 
     def setUp(self):
