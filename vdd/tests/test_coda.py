@@ -134,25 +134,34 @@ class TestCODARelationship(unittest.TestCase):
         self.cls = Concrete
         self.inst = Concrete()
 
-    @data([0.0, True],
-          [0.1, True],
-          [0.3, True],
-          [0.9, True],
-          [1.0, False],
-          [0.25, False],
-          [-0.1, False],
-          [0, True],
+    @data([0.0, 0.0, True],
+          [0.1, 0.1,  True],
+          [0.3, 0.3, True],
+          [0.9, 0.9, True],
+          [1.0, 0.1, True],
+          [0.25, None, False],
+          [-0.1, None, False],
+          [0, 0.0, True],
+          [1, 0.1, True],
+          [3, 0.3, True],
+          [9, 0.9, True],
+          ['none', 0.0, True],
+          ['weak', 0.1, True],
+          ['moderate', 0.3, True],
+          ['medium', 0.3, True],
+          ['strong', 0.9, True],
     )
     @unpack
-    def test_correlation(self, value, valid):
+    def test_correlation(self, value, internal_value, valid):
         """Correlation value must be one of a restricted set."""
         # TODO: It might be more flexible to enforce this further up
-        #		for different scaling systems.
+        #		for different scaling systems. Could also be done with
+        #		a mixin implementation implementation
         self.assertRaises(AttributeError, getattr, self.inst,
                           'correlation')
         if valid:
             self.inst.correlation = value
-            self.assertEqual(self.inst.correlation, value)
+            self.assertEqual(self.inst.correlation, internal_value)
         else:
             self.assertRaises(ValueError, setattr, self.inst,
                               'correlation', value)

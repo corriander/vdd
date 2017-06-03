@@ -155,7 +155,16 @@ class CODARelationship(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    __valid_correlations = {0.0, 0.1, 0.3, 0.9}
+    __correlation_map = {
+        external: internal
+        for internal, externals in {
+            0.0: [0, None, 'none'],
+            0.1: [1, 0.1, 'weak'],
+            0.3: [3, 0.3, 'moderate', 'medium'],
+            0.9: [9, 0.9, 'strong'],
+        }.items()
+        for external in externals
+    }
 
     def __init__(self, correlation, target):
         """
@@ -174,9 +183,13 @@ class CODARelationship(object):
         return self._correlation
     @correlation.setter
     def correlation(self, value):
-        if value not in self.__valid_correlations:
-            raise ValueError("Invalid correlation value.")
-        self._correlation = value
+        try:
+            self._correlation = self.__correlation_map[value]
+        except KeyError:
+            valid_set = set(self.__correlation_map.keys())
+            raise ValueError(
+                "Correlation must be in set {}".format(valid_set)
+            )
 
     @property
     def target(self):
