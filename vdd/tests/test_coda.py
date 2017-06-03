@@ -146,6 +146,7 @@ class TestCODARelationship(unittest.TestCase):
           [3, 0.3, True],
           [9, 0.9, True],
           ['none', 0.0, True],
+          [None, 0.0, True],
           ['weak', 0.1, True],
           ['moderate', 0.3, True],
           ['medium', 0.3, True],
@@ -188,6 +189,45 @@ class TestCODANull(unittest.TestCase):
 
         self.assertRaises(TypeError, setattr, null, 'correlation', 1)
         self.assertRaises(TypeError, setattr, null, 'target', 1)
+
+
+class TestCODAMaximise(unittest.TestCase):
+
+    # TODO: compare function over range.
+
+    def test_merit(self):
+        inst = coda.CODAMaximise(target=1.0, correlation=None)
+        self.assertAlmostEqual(inst(1.0), 0.5)
+        self.assertLess(inst(0.1), 0.5)
+        self.assertGreater(inst(2.0), 0.5)
+
+
+class TestCODAMinimise(unittest.TestCase):
+
+    # TODO: compare function over range.
+
+    def test_merit(self):
+        inst = coda.CODAMinimise(target=1.0, correlation=None)
+        self.assertAlmostEqual(inst(1.0), 0.5)
+        self.assertGreater(inst(0.1), 0.5)
+        self.assertLess(inst(2.0), 0.5)
+
+
+class TestCODAOptimise(unittest.TestCase):
+
+    # TODO: compare function over range.
+
+    def test_merit(self):
+        inst = coda.CODAOptimise(target=1.0, correlation=None,
+                                 tolerance=0.2)
+        self.assertAlmostEqual(inst(0.8), 0.5)
+        self.assertAlmostEqual(inst(1.2), 0.5)
+        self.assertAlmostEqual(inst(1.0), 1.0)
+        self.assertGreater(inst(1.1), 0.5)
+        self.assertGreater(inst(0.9), 0.5)
+        self.assertLess(inst(2.0), 0.5)
+        self.assertLess(inst(0.0), 0.5)
+
 
 
 if __name__ == '__main__':

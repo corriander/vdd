@@ -7,6 +7,7 @@ References
     Characteristics: An Aerospace Perspective for Conceptual Design -
     Journal of Engineering Design pp. 1-24
 """
+from __future__ import division
 import abc
 
 import numpy as np
@@ -230,3 +231,74 @@ class CODANull(CODARelationship):
 
     def __call__(self, x):
         return 0.0
+
+
+class CODAMaximise(CODARelationship):
+    """Models a maximising characteristic-requirement relationship.
+
+    For this type of relationship, the goal is maximise the
+    characteristic parameter value in order to best satisfy
+    requirements.
+
+    Here the target value is the neutral point where the target
+    value represents 50% satisfaction of the requirement (i.e. not
+    bad, not good).
+    """
+
+    def __call__(self, x):
+        """Return the merit of parameter value to be maximised.
+
+            x: real
+                Parameter value; results in 50% merit if at the target
+                point.
+        """
+        return 1 - (1. / 2**(x/self.target))
+
+
+class CODAMinimise(CODARelationship):
+    """Models a minimising characteristic-requirement relationship.
+
+    For this type of relationship, the goal is minimise the
+    characteristic parameter value in order to best satisfy
+    requirements.
+
+    Here the target value is the neutral point where the target
+    value represents 50% satisfaction of the requirement (i.e. not
+    bad, not good).
+    """
+
+    def __call__(self, x):
+        """Return the merit of parameter value to be optimised.
+
+            x: real
+                Parameter value; results in 50% merit if at the target
+                point.
+        """
+        return 1 - (1. / 2**(self.target/x))
+
+
+class CODAOptimise(CODARelationship):
+    """Models a opimitising characteristic-requirement relationship.
+
+    For this type of relationship, the goal is optimise the
+    characteristic parameter value in order to best satisfy
+    requirements.
+
+    Here the target value is the optimum point, op, where the target
+    value represents 100% satisfaction of the requirement and
+    tolerance is the variance either side of this optimum point
+    representing 50% merit.
+    """
+
+    def __init__(self, correlation, target, tolerance=0):
+        self.tolerance = tolerance
+        super(CODAOptimise, self).__init__(correlation, target)
+
+    def __call__(self, x):
+        """Return the merit of parameter value to be optimised.
+
+            x: real
+                Parameter value; results in 100% merit if at the
+                target point.
+        """
+        return 1. / (1 + ((x - self.target) / self.tolerance)**2)
