@@ -55,6 +55,9 @@ class TestCODA(unittest.TestCase):
                 relationship._merit_preset = self.merit[i,j]
                 inst.array[i,j] = relationship
 
+    # ----------------------------------------------------------------
+    # Test properties
+    # ----------------------------------------------------------------
     def test_array__unset(self):
         """Array should reflect shape and contain CODANull by default.
         """
@@ -87,19 +90,6 @@ class TestCODA(unittest.TestCase):
         """
         self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
-
-    def test_merit(self):
-        """A matrix of merit values returned by design relationships.
-
-        Each design relationship is a model providing a fractional
-        decimal value representing the degree to which a requirement
-        is satisfied by a given characteristic parameter value. This
-        should therefore be the same dimensions as the overall coda
-        model, i.e. (n, m) where n is the number of requirements, and
-        m the number of characteristics.
-        """
-        self.assertEqual(self.inst.merit.shape, self.inst.shape)
-        self.assertTrue((self.inst.merit==self.merit).all())
 
     def test_parameter_value(self):
         """A row vector containing characteristic parameter values.
@@ -140,6 +130,25 @@ class TestCODA(unittest.TestCase):
         # it properly with the simple input weights tuple because of
         # numpy broadcasting producing a boolean matrix.
         self.assertTrue((self.inst.weight.T==self.weights).all())
+
+    # ----------------------------------------------------------------
+    # Test methods
+    # ----------------------------------------------------------------
+    def test__merit(self):
+        """Returns a matrix of merit values for design relationships.
+
+        Each design relationship is a model providing a fractional
+        decimal value representing the degree to which a requirement
+        is satisfied by a given characteristic parameter value. This
+        should therefore be the same dimensions as the overall coda
+        model, i.e. (n, m) where n is the number of requirements, and
+        m the number of characteristics.
+
+        "Internal" method because raw merit values are not considered
+        particularly useful on their own at this point.
+        """
+        self.assertEqual(self.inst._merit().shape, self.inst.shape)
+        self.assertTrue((self.inst._merit()==self.merit).all())
 
 
 @ddt

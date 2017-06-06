@@ -49,8 +49,7 @@ class CODA(object):
 
     @property
     def merit(self):
-        vfunc = np.vectorize(lambda f, x: f(x))
-        return vfunc(self.array, self.parameter_value)
+        return # overall design merit
 
     @property
     def parameter_value(self):
@@ -83,6 +82,10 @@ class CODA(object):
         array = np.empty(self.shape, dtype=object)
         array[:] = CODANull()
         return array
+
+    def _merit(self):
+        vfunc = np.vectorize(lambda f, x: f(x))
+        return vfunc(self.array, self.parameter_value)
 
 
 class CODACharacteristic(object):
