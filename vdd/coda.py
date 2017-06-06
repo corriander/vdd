@@ -48,6 +48,10 @@ class CODA(object):
         return self._characteristics
 
     @property
+    def parameter_value(self):
+        return np.array([c.value for c in self.characteristics])
+
+    @property
     def requirements(self):
         """Modelled requirements."""
         if not hasattr(self, '_requirements'):

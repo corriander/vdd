@@ -60,6 +60,22 @@ class TestCODA(unittest.TestCase):
 
         self.assertTrue((inst.correlation == correlation).all())
 
+    def test_parameter_value(self):
+        """Property presents characteristic param. values as a vector.
+        """
+        inst = coda.CODA()
+        characteristics = []
+        values = 1, 10, 2, 7.5, 0.3
+        for x in values:
+            char = Mock()
+            char.value = x
+            characteristics.append(char)
+
+        inst._requirements = self.inst._requirements
+        inst._characteristics = tuple(characteristics)
+
+        self.assertTrue((inst.parameter_value==values).all())
+
     def test_requirements__default(self):
         """Should be an empty tuple by default."""
         temp_inst = coda.CODA()
