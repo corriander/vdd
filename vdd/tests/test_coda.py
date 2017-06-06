@@ -66,12 +66,25 @@ class TestCODA(unittest.TestCase):
 
     def test_correlation(self):
         """Property converts correlation values in array to a matrix.
+
+        Each design relationship models a correlation between a
+        requirement and a characteristic parameter. This  should
+        therefore be the same dimensions as the overall coda model,
+        i.e. (n, m) where n is the number of requirements, and m the
+        number of characteristics.
         """
+        self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
 
     def test_parameter_value(self):
-        """Property presents characteristic param. values as a vector.
+        """A row vector containing characteristic parameter values.
+
+        Characteristics are considered to be columns in the underlying
+        coda matrix, so characterstic parameter values should reflect
+        this to be unambiguous.
         """
+        self.assertEqual(self.inst.parameter_value.shape,
+                         (1, self.inst.shape[1]))
         self.assertTrue((self.inst.parameter_value==self.values).all())
 
     def test_requirements__default(self):
@@ -82,12 +95,26 @@ class TestCODA(unittest.TestCase):
         self.assertEqual(len(self.inst.requirements), 4)
 
     def test_shape(self):
-        """Shape should reflect the characteristics & requirements."""
+        """Reflects the number of characteristics & requirements.
+
+        A CODA model involves n requirements and m characteristics,
+        modelled as an (n, m) array/matrix.
+        """
         self.assertEqual(self.inst.shape, (4, 5))
 
     def test_weight(self):
-        """Property presents requirement weights as a vector."""
-        self.assertTrue((self.inst.weight==self.weights).all())
+        """A column vector containing requirement weightings.
+
+        Requirements are considered to be rows in the underlying
+        coda matrix, so requirement weights should reflect this to be
+        unambiguous.
+        """
+        self.assertEqual(self.inst.weight.shape,
+                         (self.inst.shape[0], 1))
+        # Note we must transpose the weight column vector to compare
+        # it properly with the simple input weights tuple because of
+        # numpy broadcasting producing a boolean matrix.
+        self.assertTrue((self.inst.weight.T==self.weights).all())
 
 
 @ddt

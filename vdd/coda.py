@@ -49,7 +49,7 @@ class CODA(object):
 
     @property
     def parameter_value(self):
-        return np.array([c.value for c in self.characteristics])
+        return np.array([[c.value for c in self.characteristics]])
 
     @property
     def requirements(self):
@@ -69,7 +69,8 @@ class CODA(object):
 
     @property
     def weight(self):
-        return np.array([[reqt.weight for reqt in self.requirements]])
+        rvec = np.array([[reqt.weight for reqt in self.requirements]])
+        return rvec.T
 
     def _create_array(self):
         # Create an array sized by the shape of the coda model and
