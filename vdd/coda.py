@@ -112,8 +112,8 @@ class CODA(object):
         if reltype != 'opt' and tolerance is not None:
             raise TypeError("Tolerance only valid for optimising.")
 
-        r = self._rc_lookup('r', rlkup)
-        c = self._rc_lookup('c', clkup)
+        r = self._rc_lookup('requirement', rlkup)
+        c = self._rc_lookup('characteristic', clkup)
 
         relationships = {
             'max': (CODAMaximise, (correlation, target)),
@@ -136,22 +136,18 @@ class CODA(object):
         return vfunc(self.matrix, self.parameter_value)
 
     def _rc_lookup(self, type_, value):
-        switch = {
-            'c': (CODACharacteristic, self.characteristics),
-            'r': (CODARequirement, self.requirements),
-        }
-
-        cls, tup = switch[type_]
+        type_title = type_.capitalize()
+        cls = eval('CODA{}'.format(type_title))
+        tup = getattr(self, '{}s'.format(type_))
 
         if isinstance(value, cls):
             idx = tup.index(value)
         elif isinstance(value, int):
             shape = self.shape
-            if value >= (shape[0] if type_ == 'r' else shape[1]):
-                raise KeyError("{} index out of bounds.".format({
-                    'r': 'Requirement',
-                    'c': 'Characteristic'
-                }[type_]))
+            if value >= shape[['c','r'].index(type_[0])]:
+                raise KeyError(
+                    "{} index out of bounds.".format(type_title)
+                )
 
             idx = value
         else:
