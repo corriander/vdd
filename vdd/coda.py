@@ -20,6 +20,7 @@ class CODA(object):
     @property
     def array(self):
         """2D array of relationship functions."""
+        # TODO: Rename to matrix to reflect 2D nature.
         try:
             array = self._array
 
@@ -38,7 +39,7 @@ class CODA(object):
     def correlation(self):
         """Correlation matrix."""
         vfunc = np.vectorize(attrgetter('correlation'))
-        return np.matrix(vfunc(self.array))
+        return vfunc(self.array)
 
     @property
     def characteristics(self):
@@ -53,7 +54,7 @@ class CODA(object):
 
     @property
     def parameter_value(self):
-        return np.array([[c.value for c in self.characteristics]])
+        return np.matrix([[c.value for c in self.characteristics]])
 
     @property
     def requirements(self):
@@ -79,15 +80,15 @@ class CODA(object):
 
     @property
     def weight(self):
-        rvec = np.array([[reqt.weight for reqt in self.requirements]])
-        return rvec.T
+        vec = np.matrix([[reqt.weight for reqt in self.requirements]])
+        return vec.T # Return as column vector
 
     def _create_array(self):
         # Create an array sized by the shape of the coda model and
         # populate with Null relationships.
         array = np.empty(self.shape, dtype=object)
         array[:] = CODANull()
-        return array
+        return np.matrix(array)
 
     def _merit(self):
         vfunc = np.vectorize(lambda f, x: f(x))

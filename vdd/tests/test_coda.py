@@ -88,6 +88,7 @@ class TestCODA(unittest.TestCase):
         i.e. (n, m) where n is the number of requirements, and m the
         number of characteristics.
         """
+        self.assertIsInstance(self.inst.correlation, np.matrix)
         self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
 
@@ -104,6 +105,7 @@ class TestCODA(unittest.TestCase):
         coda matrix, so characterstic parameter values should reflect
         this to be unambiguous.
         """
+        self.assertIsInstance(self.inst.parameter_value, np.matrix)
         self.assertEqual(self.inst.parameter_value.shape,
                          (1, self.inst.shape[1]))
         self.assertTrue((self.inst.parameter_value==self.values).all())
@@ -126,16 +128,18 @@ class TestCODA(unittest.TestCase):
         requirement importance weighting.
         """
         weight, correlation, merit = mocks
-        weight.return_value = np.array([[0, 0.4, 0.6]]).T
+        weight.return_value = np.matrix([0, 0.4, 0.6]).T
 
-        correlation.return_value = np.ones((3,2))
+        correlation.return_value = np.matrix(np.ones((3,2)))
 
-        merit.return_value = np.ones((3,2))
+        merit.return_value = np.matrix(np.ones((3,2)))
 
-        expected = np.array([[0.0 / 2 * (1.0 + 1.0)],
-                             [0.4 / 2 * (1.0 + 1.0)],
-                             [0.6 / 2 * (1.0 + 1.0)]])
+        expected = np.matrix([[0.0 / 2 * (1.0 + 1.0)],
+                              [0.4 / 2 * (1.0 + 1.0)],
+                              [0.6 / 2 * (1.0 + 1.0)]])
 
+        self.assertIsInstance(self.inst.satisfaction, np.matrix)
+        self.assertEqual(self.inst.satisfaction.shape, (3, 1))
         np.testing.assert_array_almost_equal(self.inst.satisfaction,
                                              expected)
 
@@ -154,6 +158,7 @@ class TestCODA(unittest.TestCase):
         coda matrix, so requirement weights should reflect this to be
         unambiguous.
         """
+        self.assertIsInstance(self.inst.weight, np.matrix)
         self.assertEqual(self.inst.weight.shape,
                          (self.inst.shape[0], 1))
         # Note we must transpose the weight column vector to compare
@@ -177,6 +182,7 @@ class TestCODA(unittest.TestCase):
         "Internal" method because raw merit values are not considered
         particularly useful on their own at this point.
         """
+        self.assertIsInstance(self.inst._merit(), np.matrix)
         self.assertEqual(self.inst._merit().shape, self.inst.shape)
         self.assertTrue((self.inst._merit()==self.merit).all())
 
