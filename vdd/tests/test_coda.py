@@ -11,13 +11,37 @@ from vdd import coda
 class TestCODA(unittest.TestCase):
 
     def setUp(self):
-        self.inst = coda.CODA()
+        self.inst = inst = coda.CODA()
 
+        characteristics = []
+        self.values = values = 1, 10, 2, 7.5, 0.3
+        for x in values:
+            char = Mock()
+            char.value = x
+            characteristics.append(char)
 
-        self.inst._requirements = tuple([object()
-                                         for i in range(4)])
-        self.inst._characteristics = tuple([object()
-                                            for i in range(5)])
+        inst._characteristics = tuple(characteristics)
+
+        requirements = []
+        self.weights = weights = 0.2, 0.1, 0.4, 0.3
+        for wt in weights:
+            reqt = Mock()
+            reqt.weight = wt
+            requirements.append(reqt)
+
+        inst._requirements = tuple(requirements)
+
+        correlation = np.array([[0.1, 0.0, 0.9, 0.3, 0.1],
+                                [0.0, 0.9, 0.3, 0.1, 0.1],
+                                [0.9, 0.3, 0.1, 0.1, 0.0],
+                                [0.3, 0.1, 0.1, 0.0, 0.9]])
+        self.correlation = correlation
+
+        for	i in range(correlation.shape[0]):
+            for j in range(correlation.shape[1]):
+                relationship = Mock()
+                relationship.correlation = correlation[i,j]
+                inst.array[i,j] = relationship
 
     def test_array__unset(self):
         """Array should reflect shape and contain CODANull by default.
@@ -27,11 +51,11 @@ class TestCODA(unittest.TestCase):
 
         self.assertEqual(self.inst.array.shape, (4, 5))
 
-        self.inst._requirements += (object(),)
-        self.assertEqual(self.inst.array.shape, (5, 5))
+        temp_inst._requirements += (object(),)
+        self.assertEqual(temp_inst.array.shape, (1, 0))
 
-        for i, j in zip(*map(range, self.inst.array.shape)):
-            self.assertIsInstance(self.inst.array[i,j], coda.CODANull)
+        for i, j in zip(*map(range, temp_inst.array.shape)):
+            self.assertIsInstance(temp_inst.array[i,j], coda.CODANull)
 
     def test_characteristics__default(self):
         """Should be an empty tuple by default."""
@@ -43,38 +67,12 @@ class TestCODA(unittest.TestCase):
     def test_correlation(self):
         """Property converts correlation values in array to a matrix.
         """
-        inst = coda.CODA()
-        inst._requirements = self.inst._requirements
-        inst._characteristics = self.inst._characteristics
-        correlation = np.array([[0.1, 0.0, 0.9, 0.3, 0.1],
-                                [0.0, 0.9, 0.3, 0.1, 0.1],
-                                [0.9, 0.3, 0.1, 0.1, 0.0],
-                                [0.3, 0.1, 0.1, 0.0, 0.9]])
-        relationship = Mock()
-
-        for	i in range(correlation.shape[0]):
-            for j in range(correlation.shape[1]):
-                relationship = Mock()
-                relationship.correlation = correlation[i,j]
-                inst.array[i,j] = relationship
-
-        self.assertTrue((inst.correlation == correlation).all())
+        self.assertTrue((self.inst.correlation==self.correlation).all())
 
     def test_parameter_value(self):
         """Property presents characteristic param. values as a vector.
         """
-        inst = coda.CODA()
-        characteristics = []
-        values = 1, 10, 2, 7.5, 0.3
-        for x in values:
-            char = Mock()
-            char.value = x
-            characteristics.append(char)
-
-        inst._requirements = self.inst._requirements
-        inst._characteristics = tuple(characteristics)
-
-        self.assertTrue((inst.parameter_value==values).all())
+        self.assertTrue((self.inst.parameter_value==self.values).all())
 
     def test_requirements__default(self):
         """Should be an empty tuple by default."""
@@ -89,18 +87,7 @@ class TestCODA(unittest.TestCase):
 
     def test_weight(self):
         """Property presents requirement weights as a vector."""
-        inst = coda.CODA()
-        requirements = []
-        weights = 0.2, 0.1, 0.4, 0.3
-        for wt in weights:
-            reqt = Mock()
-            reqt.weight = wt
-            requirements.append(reqt)
-
-        inst._requirements = tuple(requirements)
-        inst._characteristics = self.inst._characteristics
-
-        self.assertTrue((inst.weight==weights).all())
+        self.assertTrue((self.inst.weight==self.weights).all())
 
 
 @ddt
