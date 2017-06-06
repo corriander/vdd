@@ -110,6 +110,26 @@ class TestCODA(unittest.TestCase):
                          (1, self.inst.shape[1]))
         self.assertTrue((self.inst.parameter_value==self.values).all())
 
+    @data(
+        (np.array([2.0, 10, 2, 7.5, 0.3]), None),
+        (np.array([[2.0, 10, 2, 7.5, 0.3]]), None),
+        (np.array([[2.0, 10, 2, 7.5, 0.3]]).T, None),
+        (np.matrix([2.0, 10, 2, 7.5, 0.3]), None),
+        ([2.0, 10, 2, 7.5, 0.3], None),
+        (tuple([2.0, 10, 2, 7.5, 0.3]), None),
+        (set([2.0, 10, 2, 7.5, 0.3]), ValueError),
+        ([2.0, 10, 2, 7.5], ValueError),
+    )
+    @unpack
+    def test_parameter_value__set(self, value, exception):
+        self.assertEqual(self.inst.parameter_value[0,0], 1.0)
+        if exception is not None:
+            self.assertRaises(exception, setattr, self.inst,
+                              'parameter_value', value)
+        else:
+            setattr(self.inst, 'parameter_value', value)
+            self.assertEqual(self.inst.parameter_value[0,0], 2.0)
+
     def test_requirements__default(self):
         """Should be an empty tuple by default."""
         temp_inst = coda.CODA()

@@ -11,6 +11,7 @@ from __future__ import division
 
 from operator import attrgetter
 import abc
+import collections
 
 import numpy as np
 
@@ -60,7 +61,31 @@ class CODA(object):
 
     @property
     def parameter_value(self):
+        # XXX: It would be really nice if the mutability of this
+        #	   propagated down.
         return np.matrix([[c.value for c in self.characteristics]])
+    @parameter_value.setter
+    def parameter_value(self, value):
+        m = self.shape[1]
+
+        if isinstance(value, (np.ndarray, np.matrix)):
+            value = value.squeeze()	# Normalises the matrix to (1,N)
+
+        if isinstance(value, np.matrix):
+            value = value.tolist()[0]
+
+        if (len(value) == m and
+            isinstance(value, (collections.Sequence, np.ndarray))):
+            try:
+                for x, c in zip(value, self.characteristics):
+                    c.value = x
+            except Exception as err:
+                for x, c in zip(value, self.characteristics):
+                    c.value = x
+                raise
+        else:
+            raise ValueError("{} values must be provided as a 1D "
+                             "sequence.".format(self.shape[1]))
 
     @property
     def requirements(self):
