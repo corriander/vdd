@@ -94,17 +94,29 @@ class CODA(object):
         vec = np.matrix([[reqt.weight for reqt in self.requirements]])
         return vec.T # Return as column vector
 
-    def add_requirement(self, name, weight):
+    def add_requirement(self, name, weight, normalise=True):
+        # TODO: Probably want to enforce name uniqueness.
         tup = self.requirements
-        if (self.weight.sum() + weight) > 1.0:
-            raise RuntimeError(
-                "Combined requirement weight exceeds unity."
-            )
-        self._requirements = tup + (CODARequirement(name, weight),)
+        if normalise:
+            cls = CODARequirementNorm
+            if any(map(lambda o: not isinstance(o, cls), tup)):
+                raise RuntimeError(
+                    "normalise parameter must be True for all requirements."
+                )
+        else:
+            cls = CODARequirement
+            if (self.weight.sum() + weight) > 1.0:
+                raise RuntimeError(
+                    "Combined requirement weight exceeds unity."
+                )
+        self._requirements = tup + (
+            cls(context=self, name=name, weight=weight),
+        )
 
     def add_characteristic(self, name, limits, value=None):
+        # TODO: Probably want to enforce name uniqueness.
         tup = self.characteristics
-        obj = CODACharacteristic(name, limits, value)
+        obj = CODACharacteristic(name, limits, value, context=self)
         self._characteristics = tup + (obj,)
 
     def add_relationship(self, rlkup, clkup, reltype, correlation,
@@ -161,11 +173,18 @@ class CODA(object):
         return idx
 
 
-class CODACharacteristic(object):
+class CODAElement(object):
+
+    def __init__(self, name, context=None):
+        self.name = name
+        self.context = context
+
+
+class CODACharacteristic(CODAElement):
 
     _default_limits = (0.0, 1.0)
 
-    def __init__(self, name, limits=None, value=None):
+    def __init__(self, name, limits=None, value=None, context=None):
         """
             name: str
                 Identifier/description
@@ -176,7 +195,7 @@ class CODACharacteristic(object):
             value: real
                 Characteristic parameter value, e.g. mass.
         """
-        self.name = name
+        super(CODACharacteristic, self).__init__(name, context)
         if limits is not None:
             self.limits = limits
         if value is not None:
@@ -222,9 +241,9 @@ class CODACharacteristic(object):
         self._value = x
 
 
-class CODARequirement(object):
+class CODARequirement(CODAElement):
 
-    def __init__(self, name, weight=1.0):
+    def __init__(self, name, weight, **kwargs):
         """
             name: str
                 Identifier/description
@@ -232,8 +251,7 @@ class CODARequirement(object):
             weight: fraction (0.0 - 1.0)
                 Normalised importance weighting.
         """
-
-        self.name = name	# Duplication with Characteristic
+        super(CODARequirement, self).__init__(name, **kwargs)
         self.weight = weight
 
     @property
@@ -244,6 +262,40 @@ class CODARequirement(object):
         if x > 1 or x < 0:
             raise ValueError("Weight must be normalised 0 <= x <= 1.")
         self._weight = x
+
+
+class CODARequirementNorm(CODAElement):
+    """Self-normalising requirement."""
+
+    def __init__(self, context, name, weight=1.0):
+        """
+            name: str
+                Identifier/description
+
+            context: CODA instance
+                Provides access to the CODA model for improved
+                functionality.
+
+            weight: real (> 0)
+                Importance weighting, this is normalised.
+        """
+        super(CODARequirementNorm, self).__init__(name, context)
+        self.base_weight = weight
+
+    @property
+    def weight(self):
+        sum_weights =  sum([r.base_weight
+                            for r in self.context.requirements])
+        return self.base_weight / sum_weights
+
+    @property
+    def base_weight(self):
+        return self._base_weight
+    @base_weight.setter
+    def base_weight(self, x):
+        if x < 0:
+            raise ValueError("Weight must be positive.")
+        self._base_weight = x
 
 
 class CODARelationship(object):

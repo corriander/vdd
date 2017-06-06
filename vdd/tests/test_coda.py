@@ -179,12 +179,12 @@ class TestCODA(unittest.TestCase):
         [('Sole requirement', 1.0, None),
          ('Another requirement', 0.1, RuntimeError)],
     )
-    def test_add_requirement(self, reqts):
+    def test_add_requirement__prenormalised(self, reqts):
         inst = coda.CODA()
         i = 0
         for (name, normwt, exception) in reqts:
             if exception is None:
-                inst.add_requirement(name, normwt)
+                inst.add_requirement(name, normwt, normalise=False)
                 i += 1
                 self.assertEqual(len(inst.requirements), i)
                 self.assertEqual(inst.requirements[i-1].name, name)
@@ -192,7 +192,22 @@ class TestCODA(unittest.TestCase):
                                  normwt)
             else:
                 self.assertRaises(exception, inst.add_requirement,
-                                  name, normwt)
+                                  name, normwt, normalise=False)
+
+    @data(
+        (1.0, 1.0),
+        (1.0, 1.0, 1.0, 1.0),
+        (0.1, 0.2, 0.3, 0.4)
+    )
+    def test_add_requirement__unnormalised(self, weights):
+        inst = coda.CODA()
+        for wt in weights:
+            inst.add_requirement('Blah', wt, normalise=True)
+
+        self.assertAlmostEqual(
+            sum([r.weight for r in inst.requirements]),
+            1.0
+        )
 
     @data(
         [('Characteristic', 0.0, 1.0, None, None),],
