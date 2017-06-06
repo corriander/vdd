@@ -71,6 +71,21 @@ class TestCODA(unittest.TestCase):
         """Shape should reflect the characteristics & requirements."""
         self.assertEqual(self.inst.shape, (4, 5))
 
+    def test_weight(self):
+        """Property presents requirement weights as a vector."""
+        inst = coda.CODA()
+        requirements = []
+        weights = 0.2, 0.1, 0.4, 0.3
+        for wt in weights:
+            reqt = Mock()
+            reqt.weight = wt
+            requirements.append(reqt)
+
+        inst._requirements = tuple(requirements)
+        inst._characteristics = self.inst._characteristics
+
+        self.assertTrue((inst.weight==weights).all())
+
 
 @ddt
 class TestCODACharacteristic(unittest.TestCase):

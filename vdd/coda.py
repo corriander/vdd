@@ -63,6 +63,10 @@ class CODA(object):
         """
         return len(self.requirements), len(self.characteristics)
 
+    @property
+    def weight(self):
+        return np.array([[reqt.weight for reqt in self.requirements]])
+
     def _create_array(self):
         # Create an array sized by the shape of the coda model and
         # populate with Null relationships.
