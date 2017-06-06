@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from mock import Mock
+from mock import patch, Mock, PropertyMock
 from ddt import data, unpack, ddt
 
 from vdd import coda
@@ -91,6 +91,12 @@ class TestCODA(unittest.TestCase):
         self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
 
+    @patch('vdd.coda.CODA.satisfaction', new_callable=PropertyMock)
+    def test_merit(self, patch):
+        """Sum total of weighted requirement satisfaction."""
+        patch.return_value = np.arange(5)
+        self.assertEqual(self.inst.merit, 10)
+
     def test_parameter_value(self):
         """A row vector containing characteristic parameter values.
 
@@ -108,6 +114,30 @@ class TestCODA(unittest.TestCase):
         self.assertIsInstance(temp_inst.characteristics, tuple)
         self.assertEqual(len(temp_inst.characteristics), 0.0)
         self.assertEqual(len(self.inst.requirements), 4)
+
+    @patch('vdd.coda.CODA._merit')
+    @patch('vdd.coda.CODA.correlation', new_callable=PropertyMock)
+    @patch('vdd.coda.CODA.weight', new_callable=PropertyMock)
+    def test_satisfaction(self, *mocks):
+        """Weighted requirement satisfactions.
+
+        This is the merit of each characteristic parameter value for
+        each requirement, weighted by both correlation factors and
+        requirement importance weighting.
+        """
+        weight, correlation, merit = mocks
+        weight.return_value = np.array([[0, 0.4, 0.6]]).T
+
+        correlation.return_value = np.ones((3,2))
+
+        merit.return_value = np.ones((3,2))
+
+        expected = np.array([[0.0 / 2 * (1.0 + 1.0)],
+                             [0.4 / 2 * (1.0 + 1.0)],
+                             [0.6 / 2 * (1.0 + 1.0)]])
+
+        np.testing.assert_array_almost_equal(self.inst.satisfaction,
+                                             expected)
 
     def test_shape(self):
         """Reflects the number of characteristics & requirements.

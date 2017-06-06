@@ -63,6 +63,12 @@ class CODA(object):
         return self._requirements
 
     @property
+    def satisfaction(self):
+        """Satisfaction of the requirement for characteristic values.
+        """
+        return # weighted, combined merits per-requirement.
+
+    @property
     def shape(self):
         """Return shape of model (M, N).
 
