@@ -169,6 +169,111 @@ class TestCODA(unittest.TestCase):
     # ----------------------------------------------------------------
     # Test methods
     # ----------------------------------------------------------------
+    @data(
+        #[('Irrelevant requirement', 0.0, ValueError),], # not enforced
+        [('Unimportant requirement', 0.1, None),],
+        [('Important requirement', 0.9, None),],
+        [('Unimportant requirement', 0.1, None),
+         ('Important requirement', 0.9, None),],
+        [('Sole requirement', 1.0, None),],
+        [('Sole requirement', 1.0, None),
+         ('Another requirement', 0.1, RuntimeError)],
+    )
+    def test_add_requirement(self, reqts):
+        inst = coda.CODA()
+        i = 0
+        for (name, normwt, exception) in reqts:
+            if exception is None:
+                inst.add_requirement(name, normwt)
+                i += 1
+                self.assertEqual(len(inst.requirements), i)
+                self.assertEqual(inst.requirements[i-1].name, name)
+                self.assertEqual(inst.requirements[i-1].weight,
+                                 normwt)
+            else:
+                self.assertRaises(exception, inst.add_requirement,
+                                  name, normwt)
+
+    @data(
+        [('Characteristic', 0.0, 1.0, None, None),],
+        [('Characteristic', 0.0, 1.0, 1.0, None),
+         ('Another characteristic', -1.0, 11.0, None, None),],
+    )
+    def test_add_characteristic(self, chars):
+        inst = coda.CODA()
+        i = 0
+        for (name, llim, ulim, value, exception) in chars:
+            if exception is None:
+                inst.add_characteristic(name, (llim, ulim), value)
+                i += 1
+                self.assertEqual(len(inst.characteristics), i)
+                self.assertEqual(inst.characteristics[i-1].name, name)
+                self.assertEqual(inst.characteristics[i-1].limits,
+                                 (llim, ulim))
+                # Value not set in these test data.
+                #self.assertEqual(inst.characteristics[i-1].value,
+                #				 value)
+            else:
+                self.assertRaises(exception, inst.add_characteristic,
+                                  name, normwt)
+
+    @data(
+        [(0, 0, 'max', 0.1, 1.0, None, None),],
+        [(0, 0, 'min', 0.1, 1.0, None, None),],
+        [(0, 0, 'opt', 0.1, 1.0, 1.0, None),],
+        [(0, 5, 'opt', 0.1, 1.0, 1.0, KeyError),],
+        [(0, 0, 'max', 0.1, 1.0, None, None),
+         (0, 1, 'max', 0.1, 1.0, None, None),],
+    )
+    def test_add_relationship(self, rels):
+        inst = self.inst
+        for (r, c, type_, corr, tv, tol, exception) in rels:
+            if type_ == 'opt':
+                cls = coda.CODAOptimise
+                args = (r, c, type_, corr, tv, tol)
+            else:
+                args = (r, c, type_, corr, tv, tol)
+                if type_ == 'max':
+                    cls = coda.CODAMaximise
+                else:
+                    cls = coda.CODAMinimise
+
+            if exception is None:
+                inst.add_relationship(*args)
+            else:
+                self.assertRaises(exception, inst.add_relationship,
+                                  *args)
+                continue
+
+            self.assertIsInstance(inst.matrix[r,c], cls)
+            self.assertEqual(inst.matrix[r,c].correlation, corr)
+
+    @data(
+        ['Requirement0', 0, None],
+        [0, 'Characteristic0', None],
+        ['requirement0', 0, KeyError], # Case-sensitive for now.
+        ['Requirement1', 0, KeyError], # Not present.
+        ['Requirement0', 'Characteristic0', None],
+    )
+    @unpack
+    def test_add_relationship__by_name(self, rlkup, clkup, exception):
+        inst = coda.CODA()
+
+        mock1 = Mock()
+        mock1.name = 'Requirement0'
+        inst._requirements = (mock1,)
+
+        mock2 = Mock()
+        mock2.name = 'Characteristic0'
+        inst._characteristics = (mock2,)
+
+        if exception is None:
+            inst.add_relationship(rlkup, clkup, 'max', 1.0, 1.0)
+            self.assertIsInstance(inst.matrix[0,0], coda.CODAMaximise)
+        else:
+            self.assertRaises(exception, inst.add_relationship,
+                              rlkup, clkup, 'max', 1.0, 1.0)
+
     def test__merit(self):
         """Returns a matrix of merit values for design relationships.
 

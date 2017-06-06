@@ -94,6 +94,36 @@ class CODA(object):
         vec = np.matrix([[reqt.weight for reqt in self.requirements]])
         return vec.T # Return as column vector
 
+    def add_requirement(self, name, weight):
+        tup = self.requirements
+        if (self.weight.sum() + weight) > 1.0:
+            raise RuntimeError(
+                "Combined requirement weight exceeds unity."
+            )
+        self._requirements = tup + (CODARequirement(name, weight),)
+
+    def add_characteristic(self, name, limits, value=None):
+        tup = self.characteristics
+        obj = CODACharacteristic(name, limits, value)
+        self._characteristics = tup + (obj,)
+
+    def add_relationship(self, rlkup, clkup, reltype, correlation,
+                         target, tolerance=None):
+        if reltype != 'opt' and tolerance is not None:
+            raise TypeError("Tolerance only valid for optimising.")
+
+        r = self._rc_lookup('r', rlkup)
+        c = self._rc_lookup('c', clkup)
+
+        relationships = {
+            'max': (CODAMaximise, (correlation, target)),
+            'min': (CODAMinimise, (correlation, target)),
+            'opt': (CODAOptimise, (correlation, target, tolerance)),
+        }
+
+        cls, args = relationships[reltype]
+        self.matrix[r,c] = cls(*args)
+
     def _create_base_matrix(self):
         # Create an array sized by the shape of the coda model and
         # populate with Null relationships.
@@ -104,6 +134,35 @@ class CODA(object):
     def _merit(self):
         vfunc = np.vectorize(lambda f, x: f(x))
         return vfunc(self.matrix, self.parameter_value)
+
+    def _rc_lookup(self, type_, value):
+        switch = {
+            'c': (CODACharacteristic, self.characteristics),
+            'r': (CODARequirement, self.requirements),
+        }
+
+        cls, tup = switch[type_]
+
+        if isinstance(value, cls):
+            idx = tup.index(value)
+        elif isinstance(value, int):
+            shape = self.shape
+            if value >= (shape[0] if type_ == 'r' else shape[1]):
+                raise KeyError("{} index out of bounds.".format({
+                    'r': 'Requirement',
+                    'c': 'Characteristic'
+                }[type_]))
+
+            idx = value
+        else:
+            try:
+                idx = [item.name for item in tup].index(value)
+            except ValueError:
+                raise KeyError(
+                    "Lookup value must be known {}, its name or "
+                    "index.".format(type_)
+                )
+        return idx
 
 
 class CODACharacteristic(object):
