@@ -8,6 +8,8 @@ References
     Journal of Engineering Design pp. 1-24
 """
 from __future__ import division
+
+from operator import attrgetter
 import abc
 
 import numpy as np
@@ -31,6 +33,12 @@ class CODA(object):
             self._array = array = new_array
 
         return array
+
+    @property
+    def correlation(self):
+        """Correlation matrix."""
+        vfunc = np.vectorize(attrgetter('correlation'))
+        return np.matrix(vfunc(self.array))
 
     @property
     def characteristics(self):

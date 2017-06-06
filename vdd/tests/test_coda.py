@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+from mock import Mock
 from ddt import data, unpack, ddt
 
 from vdd import coda
@@ -10,10 +12,12 @@ class TestCODA(unittest.TestCase):
 
     def setUp(self):
         self.inst = coda.CODA()
+
+
         self.inst._requirements = tuple([object()
-                                         for i in 1,2,3,4])
+                                         for i in range(4)])
         self.inst._characteristics = tuple([object()
-                                            for i in 1,2,3,4,5])
+                                            for i in range(5)])
 
     def test_array__unset(self):
         """Array should reflect shape and contain CODANull by default.
@@ -35,6 +39,26 @@ class TestCODA(unittest.TestCase):
         self.assertIsInstance(temp_inst.characteristics, tuple)
         self.assertEqual(len(temp_inst.characteristics), 0.0)
         self.assertEqual(len(self.inst.requirements), 4)
+
+    def test_correlation(self):
+        """Property converts correlation values in array to a matrix.
+        """
+        inst = coda.CODA()
+        inst._requirements = self.inst._requirements
+        inst._characteristics = self.inst._characteristics
+        correlation = np.array([[0.1, 0.0, 0.9, 0.3, 0.1],
+                                [0.0, 0.9, 0.3, 0.1, 0.1],
+                                [0.9, 0.3, 0.1, 0.1, 0.0],
+                                [0.3, 0.1, 0.1, 0.0, 0.9]])
+        relationship = Mock()
+
+        for	i in range(correlation.shape[0]):
+            for j in range(correlation.shape[1]):
+                relationship = Mock()
+                relationship.correlation = correlation[i,j]
+                inst.array[i,j] = relationship
+
+        self.assertTrue((inst.correlation == correlation).all())
 
     def test_requirements__default(self):
         """Should be an empty tuple by default."""
