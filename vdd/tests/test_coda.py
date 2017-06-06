@@ -1,3 +1,11 @@
+"""
+References
+----------
+
+ 1. M.H. Eres et al, 2014. Mapping Customer Needs to Engineering
+    Characteristics: An Aerospace Perspective for Conceptual Design -
+    Journal of Engineering Design pp. 1-24
+"""
 import unittest
 
 import numpy as np
@@ -332,6 +340,79 @@ class TestCODA(unittest.TestCase):
         self.assertIsInstance(self.inst._merit(), np.matrix)
         self.assertEqual(self.inst._merit().shape, self.inst.shape)
         self.assertTrue((self.inst._merit()==self.merit).all())
+
+
+class TestCODACaseStudy1(unittest.TestCase):
+    """Case study of a bicycle wheel design based on ref 1."""
+
+    def setUp(self):
+        wheel = self.wheel = coda.CODA()
+        self._setup_requirements()
+        self._setup_characteristics()
+        self._setup_relationships()
+
+    def _setup_requirements(self):
+        wheel = self.wheel
+        for name in ('Stiffness', 'Friction', 'Weight',
+                     'Manufacturability', 'Repairability'):
+            wheel.add_requirement(name, 0.2)
+
+    def _setup_characteristics(self):
+        wheel = self.wheel
+        wheel.add_characteristic('Tyre Diameter', (24, 29), 24)
+        wheel.add_characteristic('Tyre Width', (11, 18), 13)
+        wheel.add_characteristic('Spoke Thickness', (2.8, 5), 4.3)
+        wheel.add_characteristic('Use of Composites', (0.05, 0.8),
+                                 0.2)
+
+    def _setup_relationships(self):
+        wheel = self.wheel
+
+        reqt = 'Stiffness'
+        wheel.add_relationship(reqt, 0, 'min', 'strong', 29)
+        wheel.add_relationship(reqt, 1, 'max', 'moderate', 12)
+        wheel.add_relationship(reqt, 2, 'max', 'strong', 3)
+        wheel.add_relationship(reqt, 3, 'opt', 'moderate', 0.5, 0.2)
+
+        reqt = 'Friction'
+        wheel.add_relationship(reqt, 'Tyre Diameter', 'max',
+                               'moderate', 25)
+        wheel.add_relationship(reqt, 'Tyre Width', 'max', 'strong',
+                               11)
+
+        reqt = 'Weight'
+        wheel.add_relationship(reqt, 'Tyre Diameter', 'min', 'strong',
+                               26)
+        wheel.add_relationship(reqt, 'Tyre Width', 'min', 'strong',
+                               15)
+        wheel.add_relationship(reqt, 'Spoke Thickness', 'min',
+                               'moderate', 3.5)
+        wheel.add_relationship(reqt, 'Use of Composites', 'max',
+                               'strong', 0.3)
+
+        reqt = 'Manufacturability'
+        wheel.add_relationship(reqt, 'Tyre Width', 'max', 'weak', 12)
+        wheel.add_relationship(reqt, 'Spoke Thickness', 'max',
+                               'moderate', 2.9)
+        wheel.add_relationship(reqt, 'Use of Composites', 'min',
+                               'strong', 0.5)
+
+        reqt = 'Repairability'
+        wheel.add_relationship(reqt, 'Tyre Width', 'max', 'weak', 14)
+        wheel.add_relationship(reqt, 'Spoke Thickness', 'max',
+                               'moderate', 3.8)
+        wheel.add_relationship(reqt, 'Use of Composites', 'min',
+                               'strong', 0.25)
+
+    def test_merit(self):
+        self.assertAlmostEqual(self.wheel.merit, .5788, places=4)
+
+    def test_sum_of_correlations(self):
+        """Sum of correlation factors for all requirements."""
+        np.testing.assert_array_almost_equal(
+            self.wheel.correlation.sum(axis=1),
+            np.matrix([2.4, 1.2, 3.0, 1.3, 1.3]).T
+        )
 
 
 @ddt
