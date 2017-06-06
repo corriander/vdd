@@ -18,28 +18,33 @@ import numpy as np
 class CODA(object):
 
     @property
-    def array(self):
-        """2D array of relationship functions."""
-        # TODO: Rename to matrix to reflect 2D nature.
+    def matrix(self):
+        """Matrix of relationship functions.
+
+        Matrix automatically adjusts to reflect the number of
+        requirements, n, and characteristics, m, such that the shape
+        is (n, m). CODANull relationships are used for element values
+        by default.
+        """
         try:
-            array = self._array
+            matrix = self._matrix
 
         except AttributeError:
-            array = self._array = self._create_array()
+            matrix = self._matrix = self._create_base_matrix()
 
-        shape = array.shape
+        shape = matrix.shape
         if shape != self.shape:
-            new_array = self._create_array()
-            new_array[0:shape[0],0:shape[1]] = array
-            self._array = array = new_array
+            new_matrix = self._create_base_matrix()
+            new_matrix[0:shape[0],0:shape[1]] = matrix
+            self._matrix = matrix = new_matrix
 
-        return array
+        return matrix
 
     @property
     def correlation(self):
         """Correlation matrix."""
         vfunc = np.vectorize(attrgetter('correlation'))
-        return vfunc(self.array)
+        return vfunc(self.matrix)
 
     @property
     def characteristics(self):
@@ -89,7 +94,7 @@ class CODA(object):
         vec = np.matrix([[reqt.weight for reqt in self.requirements]])
         return vec.T # Return as column vector
 
-    def _create_array(self):
+    def _create_base_matrix(self):
         # Create an array sized by the shape of the coda model and
         # populate with Null relationships.
         array = np.empty(self.shape, dtype=object)
@@ -98,7 +103,7 @@ class CODA(object):
 
     def _merit(self):
         vfunc = np.vectorize(lambda f, x: f(x))
-        return vfunc(self.array, self.parameter_value)
+        return vfunc(self.matrix, self.parameter_value)
 
 
 class CODACharacteristic(object):

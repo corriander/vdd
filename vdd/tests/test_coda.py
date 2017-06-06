@@ -53,24 +53,24 @@ class TestCODA(unittest.TestCase):
                 relationship = MockRelationship()
                 relationship.correlation = correlation[i,j]
                 relationship._merit_preset = self.merit[i,j]
-                inst.array[i,j] = relationship
+                inst.matrix[i,j] = relationship
 
     # ----------------------------------------------------------------
     # Test properties
     # ----------------------------------------------------------------
-    def test_array__unset(self):
-        """Array should reflect shape and contain CODANull by default.
+    def test_matrix__unset(self):
+        """Matrix should match shape and contain CODANull by default.
         """
         temp_inst = coda.CODA()
-        self.assertEqual(temp_inst.array.shape, (0, 0))
+        self.assertEqual(temp_inst.matrix.shape, (0, 0))
 
-        self.assertEqual(self.inst.array.shape, (4, 5))
+        self.assertEqual(self.inst.matrix.shape, (4, 5))
 
         temp_inst._requirements += (object(),)
-        self.assertEqual(temp_inst.array.shape, (1, 0))
+        self.assertEqual(temp_inst.matrix.shape, (1, 0))
 
-        for i, j in zip(*map(range, temp_inst.array.shape)):
-            self.assertIsInstance(temp_inst.array[i,j], coda.CODANull)
+        for i, j in zip(*map(range, temp_inst.matrix.shape)):
+            self.assertIsInstance(temp_inst.matrix[i,j], coda.CODANull)
 
     def test_characteristics__default(self):
         """Should be an empty tuple by default."""
