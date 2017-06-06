@@ -48,6 +48,11 @@ class CODA(object):
         return self._characteristics
 
     @property
+    def merit(self):
+        vfunc = np.vectorize(lambda f, x: f(x))
+        return vfunc(self.array, self.parameter_value)
+
+    @property
     def parameter_value(self):
         return np.array([[c.value for c in self.characteristics]])
 

@@ -37,10 +37,22 @@ class TestCODA(unittest.TestCase):
                                 [0.3, 0.1, 0.1, 0.0, 0.9]])
         self.correlation = correlation
 
+        # Dummy merit values (these would normally be a fraction).
+        self.merit = np.array([[24, 85, 78, 17,  5],
+                               [99,  7,  3, 88, 13],
+                               [41, 63, 52, 17, 31],
+                               [51, 95, 53, 60, 36]])
+
+        class MockRelationship(object):
+            merit_preset = None
+            def __call__(self, x):
+                return self._merit_preset
+
         for	i in range(correlation.shape[0]):
             for j in range(correlation.shape[1]):
-                relationship = Mock()
+                relationship = MockRelationship()
                 relationship.correlation = correlation[i,j]
+                relationship._merit_preset = self.merit[i,j]
                 inst.array[i,j] = relationship
 
     def test_array__unset(self):
@@ -75,6 +87,19 @@ class TestCODA(unittest.TestCase):
         """
         self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
+
+    def test_merit(self):
+        """A matrix of merit values returned by design relationships.
+
+        Each design relationship is a model providing a fractional
+        decimal value representing the degree to which a requirement
+        is satisfied by a given characteristic parameter value. This
+        should therefore be the same dimensions as the overall coda
+        model, i.e. (n, m) where n is the number of requirements, and
+        m the number of characteristics.
+        """
+        self.assertEqual(self.inst.merit.shape, self.inst.shape)
+        self.assertTrue((self.inst.merit==self.merit).all())
 
     def test_parameter_value(self):
         """A row vector containing characteristic parameter values.
