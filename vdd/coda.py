@@ -50,7 +50,8 @@ class CODA(object):
 
     @property
     def merit(self):
-        return # overall design merit
+        """Overall design merit."""
+        return self.satisfaction.sum()
 
     @property
     def parameter_value(self):
@@ -67,7 +68,12 @@ class CODA(object):
     def satisfaction(self):
         """Satisfaction of the requirement for characteristic values.
         """
-        return # weighted, combined merits per-requirement.
+        nwt = self.weight
+        cf = self.correlation
+        scf = cf.sum(axis=1)
+        mv = self._merit()
+        return np.multiply(np.divide(nwt, scf),
+                           np.multiply(mv, cf).sum(axis=1))
 
     @property
     def shape(self):
