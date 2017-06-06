@@ -181,7 +181,7 @@ class CODA(object):
             idx = tup.index(value)
         elif isinstance(value, int):
             shape = self.shape
-            if value >= shape[['c','r'].index(type_[0])]:
+            if value >= shape[['r','c'].index(type_[0])]:
                 raise KeyError(
                     "{} index out of bounds.".format(type_title)
                 )

@@ -287,16 +287,22 @@ class TestCODA(unittest.TestCase):
         ['Requirement0', 0, None],
         [0, 'Characteristic0', None],
         ['requirement0', 0, KeyError], # Case-sensitive for now.
-        ['Requirement1', 0, KeyError], # Not present.
+        ['Requirement2', 0, KeyError], # Not present.
         ['Requirement0', 'Characteristic0', None],
+        ['Requirement1', 'Characteristic0', None],
+        [1, 'Characteristic0', None],
     )
     @unpack
     def test_add_relationship__by_name(self, rlkup, clkup, exception):
+        """Given two requirements, 1 characteristic - add relations.
+        """
         inst = coda.CODA()
 
         mock1 = Mock()
         mock1.name = 'Requirement0'
-        inst._requirements = (mock1,)
+        mock3 = Mock()
+        mock3.name = 'Requirement1'
+        inst._requirements = (mock1,mock3)
 
         mock2 = Mock()
         mock2.name = 'Characteristic0'
@@ -304,7 +310,8 @@ class TestCODA(unittest.TestCase):
 
         if exception is None:
             inst.add_relationship(rlkup, clkup, 'max', 1.0, 1.0)
-            self.assertIsInstance(inst.matrix[0,0], coda.CODAMaximise)
+            r = rlkup if isinstance(rlkup, int) else int(rlkup[-1])
+            self.assertIsInstance(inst.matrix[r,0], coda.CODAMaximise)
         else:
             self.assertRaises(exception, inst.add_relationship,
                               rlkup, clkup, 'max', 1.0, 1.0)
