@@ -120,8 +120,10 @@ class CODA(object):
         return vec.T # Return as column vector
 
     def add_requirement(self, name, weight, normalise=True):
-        # TODO: Probably want to enforce name uniqueness.
         tup = self.requirements
+        if name in [c.name for c in tup]:
+            raise ValueError("Requirement of this name exists.")
+
         if normalise:
             cls = CODARequirementNorm
             if any(map(lambda o: not isinstance(o, cls), tup)):
@@ -138,9 +140,10 @@ class CODA(object):
             cls(context=self, name=name, weight=weight),
         )
 
-    def add_characteristic(self, name, limits, value=None):
-        # TODO: Probably want to enforce name uniqueness.
+    def add_characteristic(self, name, limits=None, value=None):
         tup = self.characteristics
+        if name in [c.name for c in tup]:
+            raise ValueError("Characteristic of this name exists.")
         obj = CODACharacteristic(name, limits, value, context=self)
         self._characteristics = tup + (obj,)
 
