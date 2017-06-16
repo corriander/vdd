@@ -57,7 +57,9 @@ class CODA(object):
     @property
     def merit(self):
         """Overall design merit."""
-        return self.satisfaction.sum()
+        # FIXME: Ignore requirements without relationships! They will
+        #        result in nan and break this.
+        return np.multiply(self.weight, self.satisfaction).sum()
 
     @property
     def parameter_value(self):
@@ -98,12 +100,10 @@ class CODA(object):
     def satisfaction(self):
         """Satisfaction of the requirement for characteristic values.
         """
-        nwt = self.weight
         cf = self.correlation
         scf = cf.sum(axis=1)
         mv = self._merit()
-        return np.multiply(np.divide(nwt, scf),
-                           np.multiply(mv, cf).sum(axis=1))
+        return np.divide(np.multiply(mv, cf).sum(axis=1), scf)
 
     @property
     def shape(self):
