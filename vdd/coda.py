@@ -268,6 +268,24 @@ class CODACharacteristic(CODAElement):
 
         self._value = x
 
+    def __str__(self):
+        return self.__unicode__()
+
+    def __unicode__(self):
+        s = self.name.encode('utf-8')
+        # TODO: Distinguish between range types.
+        s += u' [{},{}] '.format(*self.limits)
+
+        pv = '?'
+        try:
+            if self.value is not None:
+                pv = '{:.5f}'.format(self.value)
+        except AttributeError:
+            pass
+
+        s += u': {}'.format(pv)
+        return s
+
 
 class CODARequirement(CODAElement):
 
