@@ -1,6 +1,7 @@
 import re
 import collections
 import itertools
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -66,8 +67,14 @@ class ExcelParser(object):
         If the minimum or maximum values are omitted, NaN(s) will be
         returned.
         """
-        return [(rec['name'], rec['min'], rec['max'])
-                for rec in self.cdf.to_records()]
+        l = []
+        for rec in self.cdf.to_records():
+            if re.match(r'^(Unnamed: \d+|Characteristic \d+)$',
+                        rec['name']) is not None:
+                warnings.warn("Picked up a default column name")
+            else:
+                l.append((rec['name'], rec['min'], rec['max']))
+        return l
 
     def get_relationships(self):
         """Get relationships defined a 4/5-tuple.
@@ -79,7 +86,6 @@ class ExcelParser(object):
         chars = [tup[0] for tup in self.get_characteristics()]
 
         return self._parse_row(reqts, chars)
-
 
     def _parse_row(self, reqts, chars):
 
