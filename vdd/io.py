@@ -10,7 +10,7 @@ import pandas as pd
 class ExcelParser(object):
 
     # 20 characteristic definitions are supported ((4*26)/5 cols)
-    _MAX_COL = 'ZZZZ'
+    _MAX_COL = 'CZ'
     _NCOLS_CHAR = 4
 
     def __init__(self, path):
