@@ -38,8 +38,9 @@ class ExcelParser(object):
                 parse_cols="C:{}".format(self._MAX_COL)
             )[:1]
 
-            names = filter(lambda s: 'Unnamed' not in s, df.columns)
+        return self._cdf_base(df)
 
+    def _cdf_base(self, df):
             dd = collections.defaultdict(list)
             for i, s in enumerate(df.columns):
 
@@ -76,18 +77,23 @@ class ExcelParser(object):
         # TODO: Yeah I know, variable return type.
         reqts = [tup[0] for tup in self.get_requirements()]
         chars = [tup[0] for tup in self.get_characteristics()]
-        n = self._NCOLS_CHAR
 
+        return self._parse_row(reqts, chars)
+
+
+    def _parse_row(self, reqts, chars):
+
+        n = self._NCOLS_CHAR
         df = self.df.loc[:,'Correlation':]
 
         relationships = []
         for (i, r), (j, c) in itertools.product(enumerate(reqts),
                                                 enumerate(chars)):
             row = df.loc[i,:].values
-
             base_tup = (r, c, row[j*n+1], row[j*n+0], row[j*n+2])
 
             if np.isnan(base_tup[4]):
+                # The target value is always a quantity.
                 continue
 
             if base_tup[2] == 'opt':
@@ -99,10 +105,64 @@ class ExcelParser(object):
 
         return relationships
 
-
     def get_requirements(self):
         cols = ('Weighting', 'Requirements')
         return [tuple(reversed(tuple(rec)[1:]))	# Exclude idx
                 for rec in self.df.loc[:,cols].to_records()]
 
+
+class CompactExcelParser(ExcelParser):
+
+    _NCOLS_CHAR = 3
+
+    def _cdf_base(self, df):
+            dd = collections.defaultdict(list)
+            for i, s in enumerate(df.columns):
+
+                ridx = i % self._NCOLS_CHAR # Relative index
+
+                if ridx == 0:
+                    # Initial column of group; begin construct.
+                    dd['name'].append(s)
+
+                elif ridx == 1:
+                    dd['min'].append(df.loc[0, s])
+
+                elif ridx == 2:
+                    # Final column of group; add construct to list.
+                    dd['max'].append(df.loc[0, s])
+
+            self._cdf = tdf = pd.DataFrame.from_dict(dd)
+            return tdf
+
+    def _parse_row(self, reqts, chars):
+        n = self._NCOLS_CHAR
+        df = self.df.loc[:,'Relationship Type':]
+
+        relationships = []
+        for (i, r), (j, c) in itertools.product(enumerate(reqts),
+                                                enumerate(chars)):
+            row = df.loc[i,:].values
+            rel = row[j*n]
+
+            try:
+                type_ = {'+': 'max', 'o': 'opt', '-': 'min'}[rel[0]]
+            except (TypeError, IndexError):
+                # rel is not a recognised string.
+                continue
+
+            base_tup = (r, c, type_, rel, row[j*n+1])
+
+            if np.isnan(base_tup[4]):
+                # The target value is always a quantity.
+                continue
+
+            if base_tup[2] == 'opt':
+                tup = base_tup + (row[j*n+3],)
+            else:
+                tup = base_tup
+
+            relationships.append(tup)
+
+        return relationships
 
