@@ -6,6 +6,7 @@ References
     Characteristics: An Aerospace Perspective for Conceptual Design -
     Journal of Engineering Design pp. 1-24
 """
+import os
 import unittest
 
 import numpy as np
@@ -13,6 +14,8 @@ from mock import patch, Mock, PropertyMock
 from ddt import data, unpack, ddt
 
 from vdd import coda
+
+from vdd.tests import DATAD
 
 
 @ddt
@@ -426,6 +429,16 @@ class TestCODACaseStudy1(unittest.TestCase):
             self.wheel.correlation.sum(axis=1),
             np.matrix([2.4, 1.2, 3.0, 1.3, 1.3]).T
         )
+
+    def test_read_excel(self):
+        model = coda.CODA.read_excel(
+            os.path.join(DATAD, 'demo_model_casestudy1.xlsx')
+        )
+
+        for char, ref in zip(model.characteristics,
+                             self.wheel.characteristics):
+            char.value = ref.value
+        self.assertEqual(self.wheel.merit, model.merit)
 
 
 @ddt

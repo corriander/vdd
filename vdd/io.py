@@ -158,7 +158,7 @@ class CompactExcelParser(ExcelParser):
                 continue
 
             if base_tup[2] == 'opt':
-                tup = base_tup + (row[j*n+3],)
+                tup = base_tup + (row[j*n+2],)
             else:
                 tup = base_tup
 
