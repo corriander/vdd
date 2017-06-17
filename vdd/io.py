@@ -1,5 +1,8 @@
+import re
 import collections
+import itertools
 
+import numpy as np
 import pandas as pd
 
 
@@ -56,11 +59,6 @@ class ExcelParser(object):
             self._cdf = tdf = pd.DataFrame.from_dict(dd)
             return tdf
 
-    def get_requirements(self):
-        cols = ('Weighting', 'Requirements')
-        return [tuple(reversed(tuple(rec)[1:]))	# Exclude idx
-                for rec in self.df.loc[:,cols].to_records()]
-
     def get_characteristics(self):
         """Returns a 3-tuple: (<name>, <minvalue>, <maxvalue>).
 
@@ -69,4 +67,42 @@ class ExcelParser(object):
         """
         return [(rec['name'], rec['min'], rec['max'])
                 for rec in self.cdf.to_records()]
+
+    def get_relationships(self):
+        """Get relationships defined a 4/5-tuple.
+
+        Size of tuple depends on the type of relationship.
+        """
+        # TODO: Yeah I know, variable return type.
+        reqts = [tup[0] for tup in self.get_requirements()]
+        chars = [tup[0] for tup in self.get_characteristics()]
+        n = self._NCOLS_CHAR
+
+        df = self.df.loc[:,'Correlation':]
+
+        relationships = []
+        for (i, r), (j, c) in itertools.product(enumerate(reqts),
+                                                enumerate(chars)):
+            row = df.loc[i,:].values
+
+            base_tup = (r, c, row[j*n+1], row[j*n+0], row[j*n+2])
+
+            if np.isnan(base_tup[4]):
+                continue
+
+            if base_tup[2] == 'opt':
+                tup = base_tup + (row[j*n+3],)
+            else:
+                tup = base_tup
+
+            relationships.append(tup)
+
+        return relationships
+
+
+    def get_requirements(self):
+        cols = ('Weighting', 'Requirements')
+        return [tuple(reversed(tuple(rec)[1:]))	# Exclude idx
+                for rec in self.df.loc[:,cols].to_records()]
+
 

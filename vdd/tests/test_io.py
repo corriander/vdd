@@ -57,6 +57,18 @@ class TestExcelParser(unittest.TestCase):
         self.assertTrue(pd.np.isnan(retval[2][1]))
         self.assertTrue(pd.np.isnan(retval[2][2]))
 
+    def test_get_relationships(self):
+        """Three relationships are defined in the source spreadsheet.
+        """
+        # NOTE: The Weight-Tyre Width relationship is artificial for
+        #		testing optimial relationships.
+        retval = self.parser.get_relationships()
+        self.assertItemsEqual(
+            retval,
+            [('Stiffness', 'Tyre Diameter', 'min', 0.9, 29),
+             ('Friction', 'Tyre Diameter', 'max', 0.3, 12),
+             ('Weight', 'Tyre Width', 'opt', 0.1, 14, 1)]
+        )
 
 
 if __name__ == '__main__':
