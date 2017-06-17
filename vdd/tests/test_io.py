@@ -27,8 +27,7 @@ class TestExcelParser(unittest.TestCase):
         self.assertEqual(df.index.shape, (3,))	# 3 reqts
 
     def test_get_requirements(self):
-        """This should return all requirements defined in the source.
-        """
+        """Should return requisite information for requirements."""
         requirements = self.parser.get_requirements()
 
         self.assertItemsEqual(requirements, [('Stiffness', 0.2),

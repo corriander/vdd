@@ -15,4 +15,6 @@ class ExcelParser(object):
             return df
 
     def get_requirements(self):
-        return
+        cols = ('Weighting', 'Requirements')
+        return [tuple(reversed(tuple(rec)[1:]))	# Exclude idx
+                for rec in self.df.loc[:,cols].to_records()]
