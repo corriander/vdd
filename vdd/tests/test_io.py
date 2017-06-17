@@ -16,6 +16,17 @@ class TestExcelParser(unittest.TestCase):
         self.path = path = os.path.join(DATAD, 'demo_model.xlsx')
         self.parser = vdd.io.ExcelParser(path)
 
+    def test_cdf(self):
+        """This should return a pandas dataframe.
+
+        Only basic structure is checked here.
+        """
+        df = self.parser.cdf
+
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(df.index.shape, (2,)) # 2 chars
+        self.assertEqual(len(df.columns), 3) # name, min, max
+
     def test_df(self):
         """This should return a pandas dataframe.
 
@@ -28,11 +39,17 @@ class TestExcelParser(unittest.TestCase):
 
     def test_get_requirements(self):
         """Should return requisite information for requirements."""
-        requirements = self.parser.get_requirements()
+        retval = self.parser.get_requirements()
 
-        self.assertItemsEqual(requirements, [('Stiffness', 0.2),
-                                             ('Friction', 0.3),
-                                             ('Weight', 0.5)])
+        self.assertItemsEqual(retval, [('Stiffness', 0.2),
+                                       ('Friction', 0.3),
+                                       ('Weight', 0.5)])
+    def test_get_characteristics(self):
+        retval = self.parser.get_characteristics()
+
+        self.assertItemsEqual(retval, [('Tyre Diameter', 24, 29),
+                                       ('Tyre Width', 11, 18)])
+
 
 
 if __name__ == '__main__':
