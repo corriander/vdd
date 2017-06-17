@@ -355,10 +355,10 @@ class CODARelationship(object):
     __correlation_map = {
         external: internal
         for internal, externals in {
-            0.0: [0, None, 'none'],
-            0.1: [1, 0.1, 'weak'],
-            0.3: [3, 0.3, 'moderate', 'medium'],
-            0.9: [9, 0.9, 'strong'],
+            0.0: [0, None, 'none', ''],
+            0.1: [1, 0.1, 'weak', '+', 'o', '-'],
+            0.3: [3, 0.3, 'moderate', 'medium', '++', 'oo', '--'],
+            0.9: [9, 0.9, 'strong', '+++', 'ooo', '---'],
         }.items()
         for external in externals
     }

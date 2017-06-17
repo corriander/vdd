@@ -531,6 +531,15 @@ class TestCODARelationship(unittest.TestCase):
           ['moderate', 0.3, True],
           ['medium', 0.3, True],
           ['strong', 0.9, True],
+          ['---', 0.9, True],
+          ['+++', 0.9, True],
+          ['ooo', 0.9, True],
+          ['--', 0.3, True],
+          ['++', 0.3, True],
+          ['oo', 0.3, True],
+          ['o', 0.1, True],
+          ['o', 0.1, True],
+          ['o', 0.1, True],
     )
     @unpack
     def test_correlation(self, value, internal_value, valid):
