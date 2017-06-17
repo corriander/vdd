@@ -12,9 +12,10 @@ DATAD = os.path.join(os.path.dirname(__file__), 'data')
 class TestExcelParser(unittest.TestCase):
     """Test case for importing a coda model definition from Excel."""
 
-    def setUp(self):
-        self.path = path = os.path.join(DATAD, 'demo_model.xlsx')
-        self.parser = vdd.io.ExcelParser(path)
+    @classmethod
+    def setUpClass(cls):
+        cls.path = path = os.path.join(DATAD, 'demo_model.xlsx')
+        cls.parser = vdd.io.ExcelParser(path)
 
     def test_cdf(self):
         """This should return a pandas dataframe.
