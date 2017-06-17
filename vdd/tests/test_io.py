@@ -24,7 +24,7 @@ class TestExcelParser(unittest.TestCase):
         df = self.parser.cdf
 
         self.assertIsInstance(df, pd.DataFrame)
-        self.assertEqual(df.index.shape, (2,)) # 2 chars
+        self.assertEqual(df.index.shape, (3,)) # 2 chars
         self.assertEqual(len(df.columns), 3) # name, min, max
 
     def test_df(self):
@@ -44,11 +44,17 @@ class TestExcelParser(unittest.TestCase):
         self.assertItemsEqual(retval, [('Stiffness', 0.2),
                                        ('Friction', 0.3),
                                        ('Weight', 0.5)])
+
     def test_get_characteristics(self):
         retval = self.parser.get_characteristics()
 
-        self.assertItemsEqual(retval, [('Tyre Diameter', 24, 29),
-                                       ('Tyre Width', 11, 18)])
+        self.assertItemsEqual(retval[:2], [('Tyre Diameter', 24, 29),
+                                           ('Tyre Width', 11, 18)])
+
+        # Check the dummpy which contains NaNs.
+        self.assertEqual(retval[2][0], 'Dummy Characteristic')
+        self.assertTrue(pd.np.isnan(retval[2][1]))
+        self.assertTrue(pd.np.isnan(retval[2][2]))
 
 
 

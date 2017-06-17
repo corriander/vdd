@@ -64,7 +64,7 @@ class ExcelParser(object):
     def get_characteristics(self):
         """Returns a 3-tuple: (<name>, <minvalue>, <maxvalue>).
 
-        If the minimum of maximum values are omitted, nan will be
+        If the minimum or maximum values are omitted, NaN(s) will be
         returned.
         """
         return [(rec['name'], rec['min'], rec['max'])
