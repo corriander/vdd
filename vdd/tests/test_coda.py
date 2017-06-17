@@ -6,6 +6,7 @@ References
     Characteristics: An Aerospace Perspective for Conceptual Design -
     Journal of Engineering Design pp. 1-24
 """
+import os
 import unittest
 
 import numpy as np
@@ -13,6 +14,8 @@ from mock import patch, Mock, PropertyMock
 from ddt import data, unpack, ddt
 
 from vdd import coda
+
+from vdd.tests import DATAD
 
 
 @ddt
@@ -104,7 +107,7 @@ class TestCODA(unittest.TestCase):
     def test_merit(self, patch):
         """Sum total of weighted requirement satisfaction."""
         patch.return_value = np.arange(5)
-        self.assertEqual(self.inst.merit, 10)
+        self.assertAlmostEqual(self.inst.merit, 10)
 
     def test_parameter_value(self):
         """A row vector containing characteristic parameter values.
@@ -147,24 +150,37 @@ class TestCODA(unittest.TestCase):
 
     @patch('vdd.coda.CODA._merit')
     @patch('vdd.coda.CODA.correlation', new_callable=PropertyMock)
-    @patch('vdd.coda.CODA.weight', new_callable=PropertyMock)
     def test_satisfaction(self, *mocks):
         """Weighted requirement satisfactions.
 
         This is the merit of each characteristic parameter value for
-        each requirement, weighted by both correlation factors and
-        requirement importance weighting.
+        each requirement, weighted by correlation factors.
+
+        .. math:
+            \frac{\sum_{j=1}^{M} cf .* \eta}{{scf}_i}
+
+        Where
+
+            i = [1..n]
+            j = [1..m]
+
+        and
+
+            n = number of requirements
+            m = number of characteristics
         """
-        weight, correlation, merit = mocks
-        weight.return_value = np.matrix([0, 0.4, 0.6]).T
+        correlation, merit = mocks
 
-        correlation.return_value = np.matrix(np.ones((3,2)))
+        a = np.matrix(np.random.rand(3,2))
+        correlation.return_value = merit.return_value = np.matrix(a)
 
-        merit.return_value = np.matrix(np.ones((3,2)))
+        # numerator
+        num = np.multiply(a, a).sum(axis=1)
 
-        expected = np.matrix([[0.0 / 2 * (1.0 + 1.0)],
-                              [0.4 / 2 * (1.0 + 1.0)],
-                              [0.6 / 2 * (1.0 + 1.0)]])
+        # denominator
+        den = a.sum(axis=1)
+
+        expected = np.divide(num, den)
 
         self.assertIsInstance(self.inst.satisfaction, np.matrix)
         self.assertEqual(self.inst.satisfaction.shape, (3, 1))
@@ -229,8 +245,8 @@ class TestCODA(unittest.TestCase):
     )
     def test_add_requirement__unnormalised(self, weights):
         inst = coda.CODA()
-        for wt in weights:
-            inst.add_requirement('Blah', wt, normalise=True)
+        for i, wt in enumerate(weights):
+            inst.add_requirement('Blah'+str(i), wt, normalise=True)
 
         self.assertAlmostEqual(
             sum([r.weight for r in inst.requirements]),
@@ -414,6 +430,16 @@ class TestCODACaseStudy1(unittest.TestCase):
             np.matrix([2.4, 1.2, 3.0, 1.3, 1.3]).T
         )
 
+    def test_read_excel(self):
+        model = coda.CODA.read_excel(
+            os.path.join(DATAD, 'demo_model_casestudy1.xlsx')
+        )
+
+        for char, ref in zip(model.characteristics,
+                             self.wheel.characteristics):
+            char.value = ref.value
+        self.assertEqual(self.wheel.merit, model.merit)
+
 
 @ddt
 class TestCODACharacteristic(unittest.TestCase):
@@ -518,6 +544,15 @@ class TestCODARelationship(unittest.TestCase):
           ['moderate', 0.3, True],
           ['medium', 0.3, True],
           ['strong', 0.9, True],
+          ['---', 0.9, True],
+          ['+++', 0.9, True],
+          ['ooo', 0.9, True],
+          ['--', 0.3, True],
+          ['++', 0.3, True],
+          ['oo', 0.3, True],
+          ['o', 0.1, True],
+          ['o', 0.1, True],
+          ['o', 0.1, True],
     )
     @unpack
     def test_correlation(self, value, internal_value, valid):
