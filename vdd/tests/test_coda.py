@@ -431,6 +431,12 @@ class TestCODACaseStudy1(unittest.TestCase):
         )
 
     def test_read_excel(self):
+        try:
+            import pandas
+            import xlrd
+        except ImportError:
+            self.skipTest("`pandas` and `xlrd` required for "
+                          "spreadsheet parsing")
         model = coda.CODA.read_excel(
             os.path.join(DATAD, 'demo_model_casestudy1.xlsx')
         )

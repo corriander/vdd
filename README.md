@@ -3,8 +3,20 @@
 
 Tools intended to help with modelling decisions in a value centric
 design process. The intent is to keep this as generic as possible, as
-some of this decision modelling is suited to non-design activities
-with a little massaging.
+some of this decision modelling is suited to generic decision-making,
+non-design activities with a little massaging.
+
+
+Roadmap
+-------
+
+  - Model sets for comparative work (rather than a single set of
+	characteristic parameter values). 
+  - Improved visualisation.
+  - Interactive model building via the CLI.
+  - Export CODA models to Excel template.
+  - Binary matrix requirement weighting.
+  - House of Quality style requirement/characteristic weighting.
 
 
 References

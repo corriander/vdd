@@ -4,7 +4,13 @@ import itertools
 import warnings
 
 import numpy as np
-import pandas as pd
+
+try:
+    import pandas as pd
+    import xlrd
+except ImportError:
+    warnings.warn('`pandas` and `xlrd` packages required for '
+                  'spreadsheet support.')
 
 
 class ExcelParser(object):

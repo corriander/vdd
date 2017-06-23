@@ -1,8 +1,13 @@
 import unittest
 import os
 
-import pandas as pd
 import numpy as np
+try:
+    import pandas as pd
+    import xlrd
+    deps_present = True
+except ImportError:
+    deps_present = False
 
 import vdd
 
@@ -17,6 +22,10 @@ class TestExcelParser(unittest.TestCase):
     def setUpClass(cls):
         cls.path = path = os.path.join(DATAD, 'demo_model.xlsx')
         cls.parser = vdd.io.ExcelParser(path)
+
+    def setUp(self):
+        if not deps_present:
+            self.skipTest("`pandas` package required for tests.")
 
     def test_cdf(self):
         """This should return a pandas dataframe.
@@ -84,6 +93,10 @@ class TestCompactExcelParser(unittest.TestCase):
         cls.compact = vdd.io.CompactExcelParser(
             os.path.join(DATAD, 'demo_model_compact.xlsx')
         )
+
+    def setUp(self):
+        if not deps_present:
+            self.skipTest("`pandas` package required for tests.")
 
     def test_get_requirements(self):
         self.assertEqual(self.regular.get_requirements(),
