@@ -15,6 +15,8 @@ import collections
 
 import numpy as np
 
+import vdd
+
 
 class CODA(object):
 
@@ -163,6 +165,23 @@ class CODA(object):
 
         cls, args = relationships[reltype]
         self.matrix[r,c] = cls(*args)
+
+    def compare(self, other):
+        return self.matrix == other.matrix
+
+    @classmethod
+    def read_excel(cls, path, parser_class=vdd.io.CompactExcelParser):
+        """Import model from spreadsheet."""
+        parser = parser_class(path)
+        model = cls()
+        for element in 'requirement','characteristic','relationship':
+            for args in getattr(parser, 'get_{}s'.format(element))():
+                if element == 'characteristic':
+                    # FIXME: Hack
+                    args = (args[0],) + (args[1:3],)
+                getattr(model, 'add_{}'.format(element))(*args)
+
+        return model
 
     def _create_base_matrix(self):
         # Create an array sized by the shape of the coda model and
@@ -355,10 +374,10 @@ class CODARelationship(object):
     __correlation_map = {
         external: internal
         for internal, externals in {
-            0.0: [0, None, 'none'],
-            0.1: [1, 0.1, 'weak'],
-            0.3: [3, 0.3, 'moderate', 'medium'],
-            0.9: [9, 0.9, 'strong'],
+            0.0: [0, None, 'none', ''],
+            0.1: [1, 0.1, 'weak', '+', 'o', '-'],
+            0.3: [3, 0.3, 'moderate', 'medium', '++', 'oo', '--'],
+            0.9: [9, 0.9, 'strong', '+++', 'ooo', '---'],
         }.items()
         for external in externals
     }
@@ -398,6 +417,10 @@ class CODARelationship(object):
     @abc.abstractmethod
     def __call__(self, x):
         return 0.0
+
+    def __eq__(self, other):
+        return (self.correlation == other.correlation and
+                self.target == other.target)
 
 
 class CODANull(CODARelationship):
@@ -498,3 +521,7 @@ class CODAOptimise(CODARelationship):
                 target point.
         """
         return 1. / (1 + ((x - self.target) / self.tolerance)**2)
+
+    def __eq__(self, other):
+        return (super(CODAOptimise, self).__eq__(other) and
+                self.tolerance == other.tolerance)
