@@ -7,8 +7,10 @@ import numpy as np
 
 try:
     import pandas as pd
+    import xlrd
 except ImportError:
-    warnings.warn('`pandas` is required for spreadsheet support.')
+    warnings.warn('`pandas` and `xlrd` packages required for '
+                  'spreadsheet support.')
 
 
 class ExcelParser(object):
