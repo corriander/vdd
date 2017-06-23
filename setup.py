@@ -13,10 +13,9 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-import pypandoc
-
 # Markdown README used for Github.
 try:
+    import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
     long_description = long_description.replace("\r", "")
 
@@ -26,13 +25,17 @@ except OSError:
     with open('README.md', encoding='utf-8') as f:
         long_description = f.read()
 
+except (RuntimeError, ImportError):
+    # We're installing, don't bother.
+    long_description=''
+
 setup(
     name='vdd',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.0',
+    version='0.1.1',
 
     description='Tools to assist value-driven design & decisions',
     long_description=long_description,
