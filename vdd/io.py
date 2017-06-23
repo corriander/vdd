@@ -4,7 +4,11 @@ import itertools
 import warnings
 
 import numpy as np
-import pandas as pd
+
+try:
+    import pandas as pd
+except ImportError:
+    warnings.warn('`pandas` is required for spreadsheet support.')
 
 
 class ExcelParser(object):
