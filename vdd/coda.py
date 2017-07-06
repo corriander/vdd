@@ -1,5 +1,7 @@
 """CODA Modelling Tools.
 
+Defines classes required for building a Concept Design Analysis model.
+
 References
 ----------
 
@@ -45,26 +47,40 @@ class CODA(object):
 
     @property
     def correlation(self):
-        """Correlation matrix."""
+        """Correlation matrix.
+
+        Defines the strength of the relationship between a requirement
+        and characteristic.
+        """
         vfunc = np.vectorize(attrgetter('correlation'))
         return vfunc(self.matrix)
 
     @property
     def characteristics(self):
-        """Modelled characteristics."""
+        """Tuple of modelled characteristics."""
         if not hasattr(self, '_characteristics'):
             self._characteristics = ()
         return self._characteristics
 
     @property
     def merit(self):
-        """Overall design merit."""
+        """Overall design merit.
+
+        This is a value in the range [0.0, 1.0]. Note that this is a
+        relative value and 50% merit can often represent a good
+        mapping between requirements and characteristics.
+        """
         # FIXME: Ignore requirements without relationships! They will
         #        result in nan and break this.
         return np.multiply(self.weight, self.satisfaction).sum()
 
     @property
     def parameter_value(self):
+        """Row vector of characteristic parameter values.
+
+        Parameter values for all characteristics may be set in bulk
+        via this property via a sequence or matrix.
+        """
         # XXX: It would be really nice if the mutability of this
         #	   propagated down.
         return np.matrix([[c.value for c in self.characteristics]])
@@ -93,14 +109,21 @@ class CODA(object):
 
     @property
     def requirements(self):
-        """Modelled requirements."""
+        """Tuple of modelled requirements."""
         if not hasattr(self, '_requirements'):
             self._requirements = ()
         return self._requirements
 
     @property
     def satisfaction(self):
-        """Satisfaction of the requirement for characteristic values.
+        """Column vector of aggregate requirement satisfaction.
+
+        Each characteristic meets the requirement to some level of
+        satisfaction by virtue of its numerical value, the type of
+        relationship and strength of correlation (possibly no
+        satisfaction of a requirement for a null relationship). This
+        is the aggregate contribution of all characteristics for each
+        requirement.
         """
         cf = self.correlation
         scf = cf.sum(axis=1)
@@ -118,10 +141,30 @@ class CODA(object):
 
     @property
     def weight(self):
+        """Column vector of requirement weightings.
+
+        Each requirement contributions to the overall model according
+        to its weight.
+        """
         vec = np.matrix([[reqt.weight for reqt in self.requirements]])
         return vec.T # Return as column vector
 
     def add_requirement(self, name, weight, normalise=True):
+        """Add a requirement to the model.
+
+            name: str
+                Requirement name (e.g. 'lightweight')
+
+            weight: real
+                Weight of requirement.
+
+            normalise: bool
+                If true, the specified requirement weight does not
+                need to be pre-normalised.
+
+        Note: Null relationships between this requirement and
+        characteristics are assumed initially.
+        """
         tup = self.requirements
         if name in [c.name for c in tup]:
             raise ValueError("Requirement of this name exists.")
@@ -143,6 +186,22 @@ class CODA(object):
         )
 
     def add_characteristic(self, name, limits=None, value=None):
+        """Add a characteristic to the model.
+
+            name: str
+                Name of the characteristic (e.g. 'mass')
+
+            limits: 2-tuple
+                Lower and upper limits for the characteristic
+                numerical value (either or both may be None).
+
+            value: real
+                Value of the characteristic parameter. Does not need
+                to be specified on characteristic creation.
+
+        Note: Like requirements, new characteristics will initially
+        have a null relationship with existing requirements.
+        """
         tup = self.characteristics
         if name in [c.name for c in tup]:
             raise ValueError("Characteristic of this name exists.")
@@ -151,6 +210,40 @@ class CODA(object):
 
     def add_relationship(self, rlkup, clkup, reltype, correlation,
                          target, tolerance=None):
+        """Define a requirement-characteristic relationship.
+
+            rlkup: int | str
+                Index or name of the requirement.
+
+            clkip: int | str
+                Index or name of the characteristic.
+
+            reltype: str {'min', 'max', 'opt'}
+                Define the relationship as minimising, maximising or
+                optimising.
+
+            correlation: str | real
+                Define the strength of the relationship (weak,
+                moderate or strong). Must be in the set of supported
+                correlation values.
+
+            target: real
+                If an optimising relationship, this is the value at
+                which 100% requirement satisfaction is obtained. If
+                minimising or maximising, this is the "neutral point"
+                where 50% satisfaction is obtained (neither good or
+                bad).
+
+            tolerance: real
+                If an optimising relationship, this is
+
+                    tp +- tol = 50%
+
+                An exception is raised if this is specified for a
+                non-optimising relationship.
+        """
+        # TODO: Document the valid correlations!
+
         if reltype != 'opt' and tolerance is not None:
             raise TypeError("Tolerance only valid for optimising.")
 
@@ -167,6 +260,8 @@ class CODA(object):
         self.matrix[r,c] = cls(*args)
 
     def compare(self, other):
+        """Return True if the model matrix is the same as another's.
+        """
         return self.matrix == other.matrix
 
     @classmethod
@@ -250,6 +345,7 @@ class CODACharacteristic(CODAElement):
 
     @property
     def limits(self):
+        """Lower and upper bounds of the parameter value."""
         # TODO: Consider exposing limits elements (llim & ulim) also.
         try:
             return self._limits
@@ -321,6 +417,7 @@ class CODARequirement(CODAElement):
 
     @property
     def weight(self):
+        """Normalised requirement weight."""
         return self._weight
     @weight.setter
     def weight(self, x):
@@ -330,7 +427,11 @@ class CODARequirement(CODAElement):
 
 
 class CODARequirementNorm(CODAElement):
-    """Self-normalising requirement."""
+    """Self-normalising requirement.
+
+    Requirement weight is normalised against other requirements in the
+    model.
+    """
 
     def __init__(self, context, name, weight=1.0):
         """
@@ -349,6 +450,7 @@ class CODARequirementNorm(CODAElement):
 
     @property
     def weight(self):
+        """Normalised requirement weight."""
         sum_weights =  sum([r.base_weight
                             for r in self.context.requirements])
         return self.base_weight / sum_weights
@@ -396,6 +498,7 @@ class CODARelationship(object):
 
     @property
     def correlation(self):
+        """Strength of requirement-characteristic relationship."""
         return self._correlation
     @correlation.setter
     def correlation(self, value):
@@ -409,6 +512,11 @@ class CODARelationship(object):
 
     @property
     def target(self):
+        """Target value for relationship.
+
+        This is 50% satisfaction for maximising and minimising
+        relationships, 100% for optimising relationships.
+        """
         return self._target
     @target.setter
     def target(self, value):
