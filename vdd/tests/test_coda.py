@@ -18,6 +18,7 @@ except ModuleNotFoundError:
 
 from ddt import data, unpack, ddt
 
+import vdd
 from vdd import coda
 
 from vdd.tests import DATAD
@@ -643,6 +644,41 @@ class TestCODAOptimise(unittest.TestCase):
         self.assertLess(inst(2.0), 0.5)
         self.assertLess(inst(0.0), 0.5)
 
+
+class TestBinWM(unittest.TestCase):
+    # TODO: Consider different matrices, e.g. source paper.
+
+    def setUp(self):
+
+        # Motorcycle helmet.
+        self.requirements = [
+            'Light weight',
+            'Impact resistance',
+            'Good visibility',
+            'Low noise',
+            'Easy to put on/remove',
+            'Comfortable'
+        ]
+
+        self.binary_matrix = np.matrix([
+            [0, 0, 0, 1, 0, 0],
+            [0, 0, 1, 1, 1, 1],
+            [0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+        ])
+
+        self.wbm = vdd.coda.BinWM()
+        self.wbm._matrix = self.binary_matrix
+        self.wbm.requirements = self.requirements
+
+    def test_score(self):
+        np.testing.assert_allclose(
+            self.wbm.score,
+            np.array([0.095, 0.286, 0.143,  0.143, 0.143, 0.19]),
+            rtol=0.01
+        )
 
 
 if __name__ == '__main__':

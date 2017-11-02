@@ -1,2 +1,0 @@
-class WtBinaryMatrix(object):
-    pass

@@ -633,3 +633,24 @@ class CODAOptimise(CODARelationship):
     def __eq__(self, other):
         return (super(CODAOptimise, self).__eq__(other) and
                 self.tolerance == other.tolerance)
+
+
+class BinWM(object):
+    """Binary Weighting Matrix
+
+    Used to model relative importance of requirements.
+    """
+
+    @property
+    def matrix(self):
+        return np.copy(self._matrix)
+
+    @property
+    def score(self):
+        sum_x = self.matrix.sum(axis=1)
+        sum_y = np.triu(1 - self.matrix, k=1).sum(axis=0).T
+
+        sum_combined = sum_x + sum_y
+        sum_biased = sum_combined + 1
+
+        return sum_biased / sum_biased.sum()
