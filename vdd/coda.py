@@ -605,7 +605,7 @@ class CODAMinimise(CODARelationship):
 
 
 class CODAOptimise(CODARelationship):
-    """Models a opimitising characteristic-requirement relationship.
+    """Models an optimising characteristic-requirement relationship.
 
     For this type of relationship, the goal is optimise the
     characteristic parameter value in order to best satisfy
