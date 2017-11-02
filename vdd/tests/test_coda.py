@@ -10,7 +10,12 @@ import os
 import unittest
 
 import numpy as np
-from mock import patch, Mock, PropertyMock
+
+try:
+    import mock
+except ModuleNotFoundError:
+    from unittest import mock
+
 from ddt import data, unpack, ddt
 
 from vdd import coda
@@ -27,7 +32,7 @@ class TestCODA(unittest.TestCase):
         characteristics = []
         self.values = values = 1, 10, 2, 7.5, 0.3
         for x in values:
-            char = Mock()
+            char = mock.Mock()
             char.value = x
             characteristics.append(char)
 
@@ -36,7 +41,7 @@ class TestCODA(unittest.TestCase):
         requirements = []
         self.weights = weights = 0.2, 0.1, 0.4, 0.3
         for wt in weights:
-            reqt = Mock()
+            reqt = mock.Mock()
             reqt.weight = wt
             requirements.append(reqt)
 
@@ -103,7 +108,8 @@ class TestCODA(unittest.TestCase):
         self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
 
-    @patch('vdd.coda.CODA.satisfaction', new_callable=PropertyMock)
+    @mock.patch('vdd.coda.CODA.satisfaction',
+                new_callable=mock.PropertyMock)
     def test_merit(self, patch):
         """Sum total of weighted requirement satisfaction."""
         patch.return_value = np.arange(5)
@@ -148,8 +154,9 @@ class TestCODA(unittest.TestCase):
         self.assertEqual(len(temp_inst.characteristics), 0.0)
         self.assertEqual(len(self.inst.requirements), 4)
 
-    @patch('vdd.coda.CODA._merit')
-    @patch('vdd.coda.CODA.correlation', new_callable=PropertyMock)
+    @mock.patch('vdd.coda.CODA._merit')
+    @mock.patch('vdd.coda.CODA.correlation',
+                new_callable=mock.PropertyMock)
     def test_satisfaction(self, *mocks):
         """Weighted requirement satisfactions.
 
@@ -322,13 +329,13 @@ class TestCODA(unittest.TestCase):
         """
         inst = coda.CODA()
 
-        mock1 = Mock()
+        mock1 = mock.Mock()
         mock1.name = 'Requirement0'
-        mock3 = Mock()
+        mock3 = mock.Mock()
         mock3.name = 'Requirement1'
         inst._requirements = (mock1,mock3)
 
-        mock2 = Mock()
+        mock2 = mock.Mock()
         mock2.name = 'Characteristic0'
         inst._characteristics = (mock2,)
 
