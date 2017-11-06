@@ -641,6 +641,10 @@ class BinWM(object):
     Used to model relative importance of requirements.
     """
 
+    def __init__(self, *args):
+        self.requirements = args
+        self._matrix = np.matrix(np.zeros([len(args), len(args)]))
+
     @property
     def matrix(self):
         return np.copy(self._matrix)
