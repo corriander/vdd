@@ -11,9 +11,10 @@ References
 """
 from __future__ import division
 
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 import abc
 import collections
+import itertools
 
 import numpy as np
 
@@ -658,3 +659,21 @@ class BinWM(object):
         sum_biased = sum_combined + 1
 
         return sum_biased / sum_biased.sum()
+
+    def prompt(self):
+        reqs = self.requirements
+        combinations = itertools.combinations(reqs, 2)
+        coordinates = itertools.combinations(range(len(reqs)), 2)
+
+        print("Please agree (y) or disagree with the following statements (n):\n")
+        iterable = zip(coordinates, combinations)
+        for x, group in itertools.groupby(iterable, lambda o: o[1][0]):
+            for (i, j), (__, other) in group:
+                while True:
+                    response = input("{} is more important than {}: ".format(__, other))
+                    if response in 'yn':
+                        break
+                    else:
+                        print("Sorry I didn't understand...\n\n")
+
+                self._matrix[i, j] = 1 if response == 'y' else 0
