@@ -42,7 +42,7 @@ class ExcelParser(object):
         except AttributeError:
             df = pd.read_excel(
                 self.path,
-                parse_cols="C:{}".format(self._MAX_COL)
+                usecols="C:{}".format(self._MAX_COL)
             )[:1]
 
         return self._cdf_base(df)
