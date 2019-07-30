@@ -1,5 +1,6 @@
 import unittest
 import os
+import sys
 
 import numpy as np
 try:
@@ -22,6 +23,11 @@ class TestExcelParser(unittest.TestCase):
     def setUpClass(cls):
         cls.path = path = os.path.join(DATAD, 'demo_model.xlsx')
         cls.parser = vdd.io.ExcelParser(path)
+
+    def __getattr__(self, attr):
+        # Helper to support both Python 2 and 3
+        if attr == 'assertCountEqual' and sys.version_info[0] == 2:
+            return getattr(self, 'assertItemsEqual')
 
     def setUp(self):
         if not deps_present:
@@ -52,14 +58,14 @@ class TestExcelParser(unittest.TestCase):
         """Should return requisite information for requirements."""
         retval = self.parser.get_requirements()
 
-        self.assertItemsEqual(retval, [('Stiffness', 0.2),
+        self.assertCountEqual(retval, [('Stiffness', 0.2),
                                        ('Friction', 0.3),
                                        ('Weight', 0.5)])
 
     def test_get_characteristics(self):
         retval = self.parser.get_characteristics()
 
-        self.assertItemsEqual(retval[:2], [('Tyre Diameter', 24, 29),
+        self.assertCountEqual(retval[:2], [('Tyre Diameter', 24, 29),
                                            ('Tyre Width', 11, 18)])
 
         # Check the dummpy which contains NaNs.
@@ -73,7 +79,7 @@ class TestExcelParser(unittest.TestCase):
         # NOTE: The Weight-Tyre Width relationship is artificial for
         #		testing optimial relationships.
         retval = self.parser.get_relationships()
-        self.assertItemsEqual(
+        self.assertCountEqual(
             retval,
             [('Stiffness', 'Tyre Diameter', 'min', 0.9, 29),
              ('Friction', 'Tyre Diameter', 'max', 0.3, 12),
