@@ -15,10 +15,17 @@ from operator import attrgetter, itemgetter
 import abc
 import collections
 import itertools
+import random
 
 import numpy as np
 
 import vdd
+
+try:
+    input = raw_input
+except NameError:
+    # Python 3; all OK
+    pass
 
 
 class CODA(object):
@@ -660,20 +667,48 @@ class BinWM(object):
 
         return sum_biased / sum_biased.sum()
 
-    def prompt(self):
+    def _input(prompt_string):
+        # Wrapper for testing
+        return input(prompt_string)
+
+    def _print(string):
+        # Wrapper for testing
+        print(string)
+
+    def prompt(self, shuffle=True):
+        """Step through an interactive prompt to calculate weighting.
+        
+        Parameters
+        ----------
+        
+        shuffle: bool
+            Shuffle the comparisons so each decision is presented in
+            random order.
+        """
         reqs = self.requirements
         combinations = itertools.combinations(reqs, 2)
         coordinates = itertools.combinations(range(len(reqs)), 2)
 
-        print("Please agree (y) or disagree with the following statements (n):\n")
+        self._print("Please agree (y) or disagree (n) with the following statements:\n")
         iterable = zip(coordinates, combinations)
+        decisions = []
         for x, group in itertools.groupby(iterable, lambda o: o[1][0]):
-            for (i, j), (__, other) in group:
+            for (i, j), (this, other) in group:
+                decisions.append((i, j, this, other))
+
+        if shuffle:
+            random.shuffle(decisions)
+
+        for i, j, this, other in decisions:
+
+                # Keep asking until response is valid
                 while True:
-                    response = input("{} is more important than {}: ".format(__, other))
+                    response = self._input(
+                        "{} is more important than {}: ".format(this, other)
+                    )
                     if response in 'yn':
                         break
                     else:
-                        print("Sorry I didn't understand...\n\n")
+                        self._print("Sorry I didn't understand...\n\n")
 
                 self._matrix[i, j] = 1 if response == 'y' else 0

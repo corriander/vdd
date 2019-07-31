@@ -645,6 +645,7 @@ class TestCODAOptimise(unittest.TestCase):
         self.assertLess(inst(0.0), 0.5)
 
 
+@ddt
 class TestBinWM(unittest.TestCase):
 
     models = {
@@ -690,6 +691,18 @@ class TestBinWM(unittest.TestCase):
                 [0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0]
             ])
+        },
+        'Minimal Example': {
+            'requirements': [
+                'Requirement 1',
+                'Requirement 2',
+                'Requirement 3'
+            ],
+            'binary_matrix': np.matrix([
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0]
+            ])
         }
     }
 
@@ -716,6 +729,30 @@ class TestBinWM(unittest.TestCase):
             np.array([0.13, 0.16, 0.13, 0.04, 0.13, 0.09, 0.07, 0.09, 0.16]),
             atol=0.1
         )
+
+    @data(
+        [('n', 'n', 'n'), (0.17, 0.33, 0.5)],
+        [('y', 'n', 'n'), (0.33, 0.17, 0.5)],
+        [('n', 'y', 'n'), (0.33, 0.33, 0.33)],
+        [('n', 'y', 'y'), (0.33, 0.5, 0.17)],
+        [('y', 'y', 'y'), (0.5, 0.33, 0.17)]
+    )
+    @unpack
+    @mock.patch('vdd.coda.BinWM._print')
+    @mock.patch('vdd.coda.BinWM._input')
+    def test_prompt(self, answers, score, mock_input, mock_print):
+        mock_input.side_effect = answers
+        bwm = self.setup_binary_weighting_matrix('Minimal Example')
+
+        bwm.prompt(shuffle=False)
+
+        mock_input.assert_has_calls([
+            mock.call('Requirement 1 is more important than Requirement 2: '),
+            mock.call('Requirement 1 is more important than Requirement 3: '),
+            mock.call('Requirement 2 is more important than Requirement 3: ')
+        ])
+
+        np.testing.assert_allclose(bwm.score, np.array(score), atol=0.01)
 
 
 if __name__ == '__main__':
