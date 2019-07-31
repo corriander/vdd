@@ -754,6 +754,21 @@ class TestBinWM(unittest.TestCase):
 
         np.testing.assert_allclose(bwm.score, np.array(score), atol=0.01)
 
+    @mock.patch('random.shuffle')
+    @mock.patch('vdd.coda.BinWM._print')
+    @mock.patch('vdd.coda.BinWM._input')
+    def test_prompt__shuffle(self, mock_input, mock_print, mock_shuffle):
+        mock_input.side_effect = ['y'] * 3
+        bwm = self.setup_binary_weighting_matrix('Minimal Example')
+
+        bwm.prompt(shuffle=True)
+
+        mock_shuffle.assert_called_with([
+            (0, 1, 'Requirement 1', 'Requirement 2'),
+            (0, 2, 'Requirement 1', 'Requirement 3'),
+            (1, 2, 'Requirement 2', 'Requirement 3')
+        ])
+
 
 if __name__ == '__main__':
     unittest.main()
