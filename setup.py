@@ -35,7 +35,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.3',
+    version='0.1.4',
 
     description='Tools to assist value-driven design & decisions',
     long_description=long_description,
@@ -43,7 +43,7 @@ setup(
     # The project's main homepage.
     url='https://github.com/corriander/vdd',
 
-    download_url='https://github.com/corriander/vdd/archive/v0.1.3.tar.gz',
+    download_url='https://github.com/corriander/vdd/archive/v0.1.4.tar.gz',
 
     # Author details
     author='Alex Corrie',
@@ -74,10 +74,12 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7'
     ],
 
     # What does your project relate to?
-    keywords='design engineering',
+    keywords='design engineering requirements analysis',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().

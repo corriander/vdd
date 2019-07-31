@@ -11,13 +11,19 @@ References
 """
 from __future__ import division
 
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 import abc
 import collections
 
 import numpy as np
 
 import vdd
+
+try:
+    input = raw_input
+except NameError:
+    # Python 3; all OK
+    pass
 
 
 class CODA(object):
@@ -605,7 +611,7 @@ class CODAMinimise(CODARelationship):
 
 
 class CODAOptimise(CODARelationship):
-    """Models a opimitising characteristic-requirement relationship.
+    """Models an optimising characteristic-requirement relationship.
 
     For this type of relationship, the goal is optimise the
     characteristic parameter value in order to best satisfy
@@ -633,3 +639,4 @@ class CODAOptimise(CODARelationship):
     def __eq__(self, other):
         return (super(CODAOptimise, self).__eq__(other) and
                 self.tolerance == other.tolerance)
+
