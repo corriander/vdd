@@ -17,7 +17,7 @@ import collections
 
 import numpy as np
 
-import vdd
+from . import io
 
 try:
     input = raw_input
@@ -271,7 +271,7 @@ class CODA(object):
         return self.matrix == other.matrix
 
     @classmethod
-    def read_excel(cls, path, parser_class=vdd.io.CompactExcelParser):
+    def read_excel(cls, path, parser_class=io.CompactExcelParser):
         """Import model from spreadsheet."""
         parser = parser_class(path)
         model = cls()
