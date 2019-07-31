@@ -11,17 +11,21 @@ Features
 
   - Concept Design Analysis (CODA) method implementation
   - Requirements weighting with a Binary Weighting Matrix
-  - Programmatic or Excel-based models.
+  - Programmatic or Excel-based models
+
+Install
+-------
+
+	pip install vdd
 
 Roadmap
 -------
 
   - Model sets for comparative work (rather than a single set of
-	characteristic parameter values). 
-  - Improved visualisation.
-  - Export CODA models to Excel template.
-  - House of Quality style requirement/characteristic weighting.
-
+	characteristic parameter values)
+  - Improved visualisation
+  - Export CODA models to Excel template
+  - House of Quality style requirement/characteristic weighting
 
 References
 ----------
