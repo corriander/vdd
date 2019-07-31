@@ -10,10 +10,8 @@ try:
 except ImportError:
     deps_present = False
 
-import vdd
-
-
-DATAD = os.path.join(os.path.dirname(__file__), 'data')
+from .. import io
+from . import DATAD
 
 
 class TestExcelParser(unittest.TestCase):
@@ -22,7 +20,7 @@ class TestExcelParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.path = path = os.path.join(DATAD, 'demo_model.xlsx')
-        cls.parser = vdd.io.ExcelParser(path)
+        cls.parser = io.ExcelParser(path)
 
     def __getattr__(self, attr):
         # Helper to support both Python 2 and 3
@@ -88,15 +86,15 @@ class TestExcelParser(unittest.TestCase):
 
 
 class TestCompactExcelParser(unittest.TestCase):
-    """Functionally similar, but diff. source format to ExcelParser.
+    """Functionally similar, but diff. source format to io.ExcelParser.
     """
 
     @classmethod
     def setUpClass(cls):
-        cls.regular = vdd.io.ExcelParser(
+        cls.regular = io.ExcelParser(
             os.path.join(DATAD, 'demo_model.xlsx')
         )
-        cls.compact = vdd.io.CompactExcelParser(
+        cls.compact = io.CompactExcelParser(
             os.path.join(DATAD, 'demo_model_compact.xlsx')
         )
 

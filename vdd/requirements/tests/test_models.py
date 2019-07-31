@@ -1,23 +1,16 @@
-"""
-References
-----------
-
- 1. M.H. Eres et al, 2014. Mapping Customer Needs to Engineering
-    Characteristics: An Aerospace Perspective for Conceptual Design -
-    Journal of Engineering Design pp. 1-24
-"""
 import unittest
 
 import mock
 import numpy as np
 from ddt import ddt, unpack, data
 
-import vdd
+from .. import models
+
 
 @ddt
 class TestBinWM(unittest.TestCase):
 
-    models = {
+    model_data = {
         'Motorcycle Helmet': {
             'requirements': [
                 'Light weight',
@@ -76,8 +69,8 @@ class TestBinWM(unittest.TestCase):
     }
 
     def setup_binary_weighting_matrix(self, key):
-        data = self.models[key]
-        bwm = vdd.requirements.BinWM(*data['requirements'])
+        data = self.model_data[key]
+        bwm = models.BinWM(*data['requirements'])
         bwm._matrix = data['binary_matrix']
         return bwm
 
@@ -107,8 +100,8 @@ class TestBinWM(unittest.TestCase):
         [('y', 'y', 'y'), (0.5, 0.33, 0.17)]
     )
     @unpack
-    @mock.patch('vdd.requirements.BinWM._print')
-    @mock.patch('vdd.requirements.BinWM._input')
+    @mock.patch.object(models.BinWM, '_print')
+    @mock.patch.object(models.BinWM, '_input')
     def test_prompt(self, answers, score, mock_input, mock_print):
         mock_input.side_effect = answers
         bwm = self.setup_binary_weighting_matrix('Minimal Example')
@@ -124,8 +117,8 @@ class TestBinWM(unittest.TestCase):
         np.testing.assert_allclose(bwm.score, np.array(score), atol=0.01)
 
     @mock.patch('random.shuffle')
-    @mock.patch('vdd.requirements.BinWM._print')
-    @mock.patch('vdd.requirements.BinWM._input')
+    @mock.patch.object(models.BinWM, '_print')
+    @mock.patch.object(models.BinWM, '_input')
     def test_prompt__shuffle(self, mock_input, mock_print, mock_shuffle):
         mock_input.side_effect = ['y'] * 3
         bwm = self.setup_binary_weighting_matrix('Minimal Example')
