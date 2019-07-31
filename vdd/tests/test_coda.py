@@ -646,7 +646,6 @@ class TestCODAOptimise(unittest.TestCase):
 
 
 class TestBinWM(unittest.TestCase):
-    # TODO: Consider different matrices, e.g. source paper.
 
     models = {
         'Motorcycle Helmet': {
@@ -668,6 +667,30 @@ class TestBinWM(unittest.TestCase):
                 [0, 0, 0, 0, 0, 0]
             ])
         },
+        'Simple Aircraft': {
+            'requirements': [
+                'Easy to extend operational life',
+                'Green aircraft',
+                'Easy to operate',
+                'Cheap to maintain and repair',
+                'Lowest consumption per PAX-km',
+                'No A/C on ground',
+                'Unlimited use of Internet',
+                'Extremely comfortable',
+                'Sufficient range'
+            ],
+            'binary_matrix': np.matrix([
+                [0, 0, 1, 1, 0, 1, 1, 1, 0],
+                [0, 0, 0, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 1, 1, 0, 1, 1, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 1, 1, 1, 1],
+                [0, 0, 0, 0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0]
+            ])
+        }
     }
 
     def setup_binary_weighting_matrix(self, key):
@@ -682,7 +705,16 @@ class TestBinWM(unittest.TestCase):
         np.testing.assert_allclose(
             bwm.score,
             np.array([0.095, 0.286, 0.143,  0.143, 0.143, 0.19]),
-            rtol=0.01
+            atol=0.01
+        )
+
+    def test_score__simple_aircraft(self):
+        bwm = self.setup_binary_weighting_matrix('Simple Aircraft')
+
+        np.testing.assert_allclose(
+            bwm.score,
+            np.array([0.13, 0.16, 0.13, 0.04, 0.13, 0.09, 0.07, 0.09, 0.16]),
+            atol=0.1
         )
 
 
