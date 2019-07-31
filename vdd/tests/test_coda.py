@@ -648,34 +648,39 @@ class TestCODAOptimise(unittest.TestCase):
 class TestBinWM(unittest.TestCase):
     # TODO: Consider different matrices, e.g. source paper.
 
-    def setUp(self):
+    models = {
+        'Motorcycle Helmet': {
+            'requirements': [
+                'Light weight',
+                'Impact resistance',
+                'Good visibility',
+                'Low noise',
+                'Easy to put on/remove',
+                'Comfortable'
+                'Light'
+            ],
+            'binary_matrix': np.matrix([
+                [0, 0, 0, 1, 0, 0],
+                [0, 0, 1, 1, 1, 1],
+                [0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 1, 1],
+                [0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0]
+            ])
+        },
+    }
 
-        # Motorcycle helmet.
-        self.requirements = [
-            'Light weight',
-            'Impact resistance',
-            'Good visibility',
-            'Low noise',
-            'Easy to put on/remove',
-            'Comfortable'
-        ]
+    def setup_binary_weighting_matrix(self, key):
+        data = self.models[key]
+        bwm = vdd.coda.BinWM(data['requirements'])
+        bwm._matrix = data['binary_matrix']
+        return bwm
 
-        self.binary_matrix = np.matrix([
-            [0, 0, 0, 1, 0, 0],
-            [0, 0, 1, 1, 1, 1],
-            [0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0]
-        ])
+    def test_score__motorcycle_helmet(self):
+        bwm = self.setup_binary_weighting_matrix('Motorcycle Helmet')
 
-        self.wbm = vdd.coda.BinWM()
-        self.wbm._matrix = self.binary_matrix
-        self.wbm.requirements = self.requirements
-
-    def test_score(self):
         np.testing.assert_allclose(
-            self.wbm.score,
+            bwm.score,
             np.array([0.095, 0.286, 0.143,  0.143, 0.143, 0.19]),
             rtol=0.01
         )
