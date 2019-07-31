@@ -695,7 +695,7 @@ class TestBinWM(unittest.TestCase):
 
     def setup_binary_weighting_matrix(self, key):
         data = self.models[key]
-        bwm = vdd.coda.BinWM(data['requirements'])
+        bwm = vdd.coda.BinWM(*data['requirements'])
         bwm._matrix = data['binary_matrix']
         return bwm
 
