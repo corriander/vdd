@@ -5,6 +5,8 @@ import random
 
 import numpy as np
 
+from . import io
+
 
 class BinWM(object):
     """Binary Weighting Matrix
@@ -15,9 +17,18 @@ class BinWM(object):
     set of requirements.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, matrix=None):
         self.requirements = args
-        self._matrix = np.matrix(np.zeros([len(args), len(args)]))
+        if matrix is None:
+            matrix = np.matrix(np.zeros([len(args), len(args)]))
+        self._matrix = matrix
+
+    @classmethod
+    def from_google_sheet(cls, workbook_name):
+        sheet = io.BinWMGSheet(workbook_name)
+        inst = cls(*sheet.get_requirements())
+        inst._matrix = sheet.get_value_matrix()
+        return inst
 
     @property
     def matrix(self):
