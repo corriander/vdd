@@ -32,6 +32,8 @@ class BinWMSource(ABC):
 
 class BinWMGSheet(BinWMSource):
 
+    class InvalidSource(Exception): pass
+
     def __init__(self, workbook_name):
         self._workbook_name = workbook_name
         self._facade = GSheetsFacade()
@@ -45,18 +47,67 @@ class BinWMGSheet(BinWMSource):
             header = rows[0]
             records = rows[1:]
 
-            df = pd.DataFrame.from_records(records, index=0)
-            df.columns = header
-            df = df.set_index('Requirements')
+            try:
+                df = pd.DataFrame.from_records(records)
+                df.columns = header
+                df = df.set_index(df.columns[0])
+            except:
+                raise self.InvalidSource("Can't construct dataframe.")
+
+            x, y = df.shape
+            if x*y != x**2:
+                raise self.InvalidSource("Source matrix not square.")
+
+            mat = df.to_numpy()
+
+            lower_tri = mat[np.tril_indices(n=x, k=0)]
+            upper_tri = mat[np.triu_indices(n=x, k=1)]
+            # check all elements are '', '0' or '1'
+            # if all zero, break
+            # check for 1s in the lower tri (bad)
+            # Set lower tri to ''
+            # If all blank; set to '0'; break
+            # If not all blank, we have values in upper.
+            # Check for blanks in upper tri (bad)
+            # Only '0' and '1' left in upper tri (fine)
+            # Replace '' with '0' in whole
+            if not ((mat == '') | (mat == '0') | (mat == '1')).all():
+                raise self.InvalidSource(
+                    "Valid matrix values are empty, 0 or 1"
+                )
+
+            elif (mat == '0').all():
+                df[:] = '0'
+
+            elif (lower_tri == '1').any():
+                raise self.InvalidSource(
+                    "Lower triangular matrix should be 0 or empty"
+                )
+
+            else:
+                mat[np.tril_indices(n=x, k=0)] = ''
+                if (mat == '').all():
+                    df[:] = '0'
+
+                elif (upper_tri == '').any():
+                    raise self.InvalidSource(
+                        "Upper triangular matrix must be complete."
+                    )
+            df[df == ''] = '0'
+
             df = self._cached_df = df.astype(int)
             return df
 
     def is_valid(self):
-        x, y = self.df.shape
-        return x**2 == x*y
-    
+        try:
+            x, y = self.df.shape
+        except self.InvalidSource:
+            return False
+        else:
+            return True
+
     def get_requirements(self):
-        return self.df.columns
+        return list(self.df.columns.values)
 
     def get_value_matrix(self):
         return np.matrix(self.df.to_numpy())

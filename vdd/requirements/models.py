@@ -17,10 +17,10 @@ class BinWM(object):
     set of requirements.
     """
 
-    def __init__(self, *args, matrix=None):
+    def __init__(self, *args, **kwargs):
         self.requirements = args
-        if matrix is None:
-            matrix = np.matrix(np.zeros([len(args), len(args)]))
+        default_matrix = np.matrix(np.zeros([len(args), len(args)]))
+        matrix = kwargs.get('matrix', default_matrix)
         self._matrix = matrix
 
     @classmethod
@@ -46,10 +46,12 @@ class BinWM(object):
 
         return sum_biased / sum_biased.sum()
 
+    @staticmethod
     def _input(prompt_string):
         # Wrapper for testing
         return input(prompt_string)
 
+    @staticmethod
     def _print(string):
         # Wrapper for testing
         print(string)
@@ -84,7 +86,7 @@ class BinWM(object):
                 # Keep asking until response is valid
                 while True:
                     response = self._input(
-                        "{} is more important than {}: "
+                        "'{}' is more important than '{}': "
                         .format(this, other)
                     )
                     if response in 'yn':
