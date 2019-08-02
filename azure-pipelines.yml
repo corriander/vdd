@@ -22,17 +22,23 @@ strategy:
       python.version: '3.7'
 
 steps:
+- bash: echo "##vso[task.prependpath]$CONDA/bin"
+  displayName: Add conda to PATH
+
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '$(python.version)'
   displayName: 'Use Python $(python.version)'
 
 - script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Install dependencies'
+    CONDA_ENV=$(grep -Po '(?<=name:).*(?= *)' environment.yml)-$(python.version)
+    echo "##vso[task.setvariable variable=conda_env]$CONDA_ENV"
+    conda create --yes --name $CONDA_ENV python=$(python.version)
+    conda env update --quiet --name $CONDA_ENV --file environment.yml
+  displayName: Create conda environment
 
 - script: |
-    pip install pytest pytest-azurepipelines
+    source activate $CONDA_ENV
+    conda install -y -c conda-forge pytest pytest-azurepipelines
     pytest
-  displayName: 'pytest'
+  displayName: Run tests in conda environment
