@@ -109,9 +109,12 @@ class TestBinWM(unittest.TestCase):
         bwm.prompt(shuffle=False)
 
         mock_input.assert_has_calls([
-            mock.call('Requirement 1 is more important than Requirement 2: '),
-            mock.call('Requirement 1 is more important than Requirement 3: '),
-            mock.call('Requirement 2 is more important than Requirement 3: ')
+            mock.call("'Requirement 1' is more important than "
+                      "'Requirement 2': "),
+            mock.call("'Requirement 1' is more important than "
+                      "'Requirement 3': "),
+            mock.call("'Requirement 2' is more important than "
+                      "'Requirement 3': ")
         ])
 
         np.testing.assert_allclose(bwm.score, np.array(score), atol=0.01)

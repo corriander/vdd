@@ -1,0 +1,8 @@
+ddt==1.2.1
+pygsheets==2.0.2
+mock==3.0.5
+numpy==1.16.4
+pandas==0.24.2
+pypandoc==1.4
+xdg==1.0.5
+xlrd==1.2.0

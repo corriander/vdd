@@ -5,6 +5,8 @@ import random
 
 import numpy as np
 
+from . import io
+
 
 class BinWM(object):
     """Binary Weighting Matrix
@@ -15,9 +17,18 @@ class BinWM(object):
     set of requirements.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         self.requirements = args
-        self._matrix = np.matrix(np.zeros([len(args), len(args)]))
+        default_matrix = np.matrix(np.zeros([len(args), len(args)]))
+        matrix = kwargs.get('matrix', default_matrix)
+        self._matrix = matrix
+
+    @classmethod
+    def from_google_sheet(cls, workbook_name):
+        sheet = io.GSheetBinWM(workbook_name)
+        inst = cls(*sheet.get_requirements())
+        inst._matrix = sheet.get_value_matrix()
+        return inst
 
     @property
     def matrix(self):
@@ -35,10 +46,12 @@ class BinWM(object):
 
         return sum_biased / sum_biased.sum()
 
+    @staticmethod
     def _input(prompt_string):
         # Wrapper for testing
         return input(prompt_string)
 
+    @staticmethod
     def _print(string):
         # Wrapper for testing
         print(string)
@@ -73,7 +86,7 @@ class BinWM(object):
                 # Keep asking until response is valid
                 while True:
                     response = self._input(
-                        "{} is more important than {}: "
+                        "'{}' is more important than '{}': "
                         .format(this, other)
                     )
                     if response in 'yn':
