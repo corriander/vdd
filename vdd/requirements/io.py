@@ -1,11 +1,10 @@
 import abc
 import os
 
-import gspread
+import pygsheets
 import numpy as np
 import pandas as pd
 import xdg
-from  oauth2client.service_account import ServiceAccountCredentials
 
 
 # Python 2 & 3 compatible ABC superclass.
@@ -118,37 +117,42 @@ class GSheetBinWM(BinWMSource):
 
 class GSheetsFacade(object):
 
+    _credentials_path = os.path.join(
+        xdg.XDG_CONFIG_HOME,
+        'vdd',
+        'gsheets_credentials.json'
+    )
+
     @property
     def _client(self):
+        # google sheets client (cached)
         try:
             return self._cached_client
         except AttributeError:
-            creds = GSheetsAuth().get_credentials()
-            self._cached_client = gspread.authorize(creds)
+            self._cached_client = pygsheets.authorize(
+                service_account_file=self._credentials_path
+            )
             return self._cached_client
 
     def get_rows(self, workbook_name):
-        """Return the list of populated rows."""
+        """Return a 2D list of populated rows/columns."""
         sheet = self._client.open(workbook_name).sheet1
-        return sheet.get_all_values()
+        return PyGSheetsGSpreadAdapter(sheet).get_all_values()
 
 
-class GSheetsAuth(object):
+class PyGSheetsGSpreadAdapter(object):
+    # pygsheet's sheet api is a bit poor and does odd things. this
+    # class provides a get_all_values method that behaves a little
+    # more like gspread's default behaviour for the similar method.
 
-    AUTH_SCOPES = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/drive'
-    ]
+    def __init__(self, pygsheets_sheet):
+        self.sheet = pygsheets_sheet
 
-    @property
-    def _config_dir(self):
-        return os.path.join(xdg.XDG_CONFIG_HOME, 'vdd')
-
-    def get_client_secret_path(self):
-        return os.path.join(self._config_dir, 'gsheets_credentials.json')
-
-    def get_credentials(self):
-        return ServiceAccountCredentials.from_json_keyfile_name(
-            self.get_client_secret_path(),
-            self.AUTH_SCOPES
-        )
+    def get_all_values(self):
+        sheet = self.sheet
+        rows = sheet.get_all_values(include_tailing_empty_rows=False)
+        # Strip all empty trailing columns
+        rows = zip(*rows)
+        rows = [cell for cell in rows if any(cell)]
+        rows = [list(row) for row in zip(*rows)]
+        return rows
