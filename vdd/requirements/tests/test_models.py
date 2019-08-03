@@ -97,5 +97,52 @@ class TestBinWM(TestCase):
         ])
 
 
+class TestBinWM_GoogleSheetsIntegration(TestCase):
+
+    @mock.patch('vdd.requirements.io.GSheetBinWM', spec_set=True)
+    def test_from_google_sheet(self, mock_cls):
+        """Constructor uses and links a google sheet to instantiate.
+
+        Requirements and binary matrix are fetched from the
+        io.BinWMSheet interface to populate the object.
+        """
+        # Get reference data
+        data = self.get_fixture_data('case__minimal_example.json')
+        requirements = data['requirements']
+        binary_matrix = data['binary_matrix']
+
+        # Set up mock
+        mock_cls().get_requirements.return_value = requirements
+        mock_cls().get_value_matrix.return_value = binary_matrix
+
+        bwm = models.BinWM.from_google_sheet('dummy name')
+
+        self.assertEqual(bwm.requirements, tuple(requirements))
+        np.testing.assert_allclose(bwm.matrix, binary_matrix)
+
+    @mock.patch('vdd.requirements.io.GSheetBinWM', spec_set=True)
+    def test_access_sheet_model(self, mock_cls):
+        """Instances access linked sheets through a generic interface.
+        """
+        # Get reference data
+        data = self.get_fixture_data('case__minimal_example.json')
+        requirements = data['requirements']
+        binary_matrix = data['binary_matrix']
+
+        # Set up mock
+        mock_cls().get_requirements.return_value = requirements
+        mock_cls().get_value_matrix.return_value = binary_matrix
+
+        bwm = models.BinWM.from_google_sheet('dummy name')
+
+        self.assertIs(bwm._sheet, mock_cls())
+
+
+class TestBinWM_ExcelIntegration(unittest.TestCase):
+    # TODO: BinWM is not current integrated with Excel
+    pass
+
+
+
 if __name__ == '__main__':
     unittest.main()
