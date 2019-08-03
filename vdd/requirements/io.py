@@ -11,7 +11,7 @@ import xdg
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
 
-class BinWMSource(ABC):
+class BinWMSheet(ABC):
 
     @abc.abstractmethod
     def is_valid(self):
@@ -29,7 +29,7 @@ class BinWMSource(ABC):
         return np.matrix([])
 
 
-class GSheetBinWM(BinWMSource):
+class GSheetBinWM(BinWMSheet):
 
     class InvalidSource(Exception): pass
 

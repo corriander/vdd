@@ -1,77 +1,39 @@
+import json
+import os
 import unittest
 
 import mock
 import numpy as np
 from ddt import ddt, unpack, data
 
+from .. import io
 from .. import models
+
+from . import FIXTURES_DIR
+
+
+class TestCase(unittest.TestCase):
+
+    def get_fixture_data(self, fname):
+        path = os.path.join(FIXTURES_DIR, fname)
+        with open(path) as f:
+            return json.load(f)
 
 
 @ddt
-class TestBinWM(unittest.TestCase):
+class TestBinWM(TestCase):
 
-    model_data = {
-        'Motorcycle Helmet': {
-            'requirements': [
-                'Light weight',
-                'Impact resistance',
-                'Good visibility',
-                'Low noise',
-                'Easy to put on/remove',
-                'Comfortable'
-                'Light'
-            ],
-            'binary_matrix': np.matrix([
-                [0, 0, 0, 1, 0, 0],
-                [0, 0, 1, 1, 1, 1],
-                [0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 0, 1, 1],
-                [0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0]
-            ])
-        },
-        'Simple Aircraft': {
-            'requirements': [
-                'Easy to extend operational life',
-                'Green aircraft',
-                'Easy to operate',
-                'Cheap to maintain and repair',
-                'Lowest consumption per PAX-km',
-                'No A/C on ground',
-                'Unlimited use of Internet',
-                'Extremely comfortable',
-                'Sufficient range'
-            ],
-            'binary_matrix': np.matrix([
-                [0, 0, 1, 1, 0, 1, 1, 1, 0],
-                [0, 0, 0, 1, 1, 1, 1, 1, 0],
-                [0, 0, 0, 1, 1, 0, 1, 1, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 1, 1, 1, 1],
-                [0, 0, 0, 0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0]
-            ])
-        },
-        'Minimal Example': {
-            'requirements': [
-                'Requirement 1',
-                'Requirement 2',
-                'Requirement 3'
-            ],
-            'binary_matrix': np.matrix([
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0]
-            ])
-        }
+    model_data_fixtures = {
+        'Minimal Example': 'case__minimal_example.json',
+        'Motorcycle Helmet': 'case__motorcycle_helmet.json',
+        'Simple Aircraft': 'case__simple_aircraft.json'
     }
 
     def setup_binary_weighting_matrix(self, key):
-        data = self.model_data[key]
+        fixture_fname = self.model_data_fixtures[key]
+        data = self.get_fixture_data(fixture_fname)
         bwm = models.BinWM(*data['requirements'])
-        bwm._matrix = data['binary_matrix']
+        bwm._matrix = np.matrix(data['binary_matrix'])
         return bwm
 
     def test_score__motorcycle_helmet(self):
