@@ -30,7 +30,7 @@ class BinWMSource(ABC):
         return np.matrix([])
 
 
-class BinWMGSheet(BinWMSource):
+class GSheetBinWM(BinWMSource):
 
     class InvalidSource(Exception): pass
 

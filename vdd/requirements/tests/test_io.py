@@ -17,7 +17,7 @@ class TestBinWMSource(unittest.TestCase):
 
 
 @ddt
-class TestBinWMGSheet(unittest.TestCase):
+class TestGSheetBinWM(unittest.TestCase):
 
     def get_mock_facade(self, fixture):
         mock_facade = mock.Mock(spec_set=io.GSheetsFacade)
@@ -27,7 +27,7 @@ class TestBinWMGSheet(unittest.TestCase):
         return mock_facade
 
     def get_subject_under_test(self, fixture):
-        sut = io.BinWMGSheet('dummy_workbook_name')
+        sut = io.GSheetBinWM('dummy_workbook_name')
         sut._facade = self.get_mock_facade(fixture)
         return sut
 
@@ -71,7 +71,7 @@ class TestBinWMGSheet(unittest.TestCase):
         """The requirements list can't be read; raise an exception."""
         sut = self.get_subject_under_test(fixture)
         self.assertRaises(
-            io.BinWMGSheet.InvalidSource,
+            io.GSheetBinWM.InvalidSource,
             sut.get_requirements
         )
 
@@ -106,7 +106,7 @@ class TestBinWMGSheet(unittest.TestCase):
         """The binary matrix can't be read; raise an exception."""
         sut = self.get_subject_under_test(fixture)
         self.assertRaises(
-            io.BinWMGSheet.InvalidSource,
+            io.GSheetBinWM.InvalidSource,
             sut.get_value_matrix
         )
 
