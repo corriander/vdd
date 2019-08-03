@@ -4,6 +4,7 @@ import unittest
 
 import mock
 import numpy as np
+import pandas as pd
 from ddt import ddt, unpack, data
 
 from .. import io
@@ -96,46 +97,89 @@ class TestBinWM(TestCase):
             (1, 2, 'Requirement 2', 'Requirement 3')
         ])
 
+    def test_to_dataframe(self):
+        """Method coerces the matrix to a pandas dataframe.
 
+        Test creates a matrix from source data and checks the
+        dataframe looks right.
+        """
+        bwm = self.setup_binary_weighting_matrix('Minimal Example')
+
+        actual = bwm.to_dataframe()
+
+        expected = pd.DataFrame(
+            data=[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+            columns=['Requirement ' + str(x) for x in range(1, 4)],
+            index=['Requirement ' + str(x) for x in range(1, 4)]
+        )
+
+        pd.testing.assert_frame_equal(actual, expected)
+
+    def test_save(self):
+        """Method is only implemented in special cases."""
+        bwm = self.setup_binary_weighting_matrix('Minimal Example')
+        bwm._matrix[2, 0] = 1
+        self.assertRaises(NotImplementedError, bwm.save)
+
+
+@mock.patch.object(models.BinWM, '_get_sheet')
 class TestBinWM_GoogleSheetsIntegration(TestCase):
 
-    @mock.patch('vdd.requirements.io.GSheetBinWM', spec_set=True)
-    def test_from_google_sheet(self, mock_cls):
+    def setup_mock_sheet(self, mock_getter):
+        # Get reference data
+        data = self.get_fixture_data('case__minimal_example.json')
+        requirements = data['requirements']
+        binary_matrix = np.matrix(data['binary_matrix'])
+
+        # Set up mock
+        mock_sheet = mock.MagicMock(spec_set=io.GSheetBinWM)
+        mock_getter.return_value = mock_sheet
+        mock_sheet.get_requirements.return_value = requirements
+        mock_sheet.get_value_matrix.return_value = binary_matrix
+
+        return mock_sheet
+
+    def test_from_google_sheet(self, mock_getter):
         """Constructor uses and links a google sheet to instantiate.
 
         Requirements and binary matrix are fetched from the
         io.BinWMSheet interface to populate the object.
         """
-        # Get reference data
-        data = self.get_fixture_data('case__minimal_example.json')
-        requirements = data['requirements']
-        binary_matrix = data['binary_matrix']
-
-        # Set up mock
-        mock_cls().get_requirements.return_value = requirements
-        mock_cls().get_value_matrix.return_value = binary_matrix
+        mock_sheet = self.setup_mock_sheet(mock_getter)
 
         bwm = models.BinWM.from_google_sheet('dummy name')
 
-        self.assertEqual(bwm.requirements, tuple(requirements))
-        np.testing.assert_allclose(bwm.matrix, binary_matrix)
+        actual_requirements = bwm.requirements
+        expected_requirements = tuple(mock_sheet.get_requirements())
+        self.assertEqual(actual_requirements, expected_requirements)
 
-    @mock.patch('vdd.requirements.io.GSheetBinWM', spec_set=True)
-    def test_access_sheet_model(self, mock_cls):
+        actual_matrix = bwm.matrix
+        expected_matrix = mock_sheet.get_value_matrix()
+        np.testing.assert_allclose(actual_matrix, expected_matrix)
+
+    def test_access_sheet_model(self, mock_getter):
         """Instances access linked sheets through a generic interface.
         """
-        # Get reference data
-        data = self.get_fixture_data('case__minimal_example.json')
-        requirements = data['requirements']
-        binary_matrix = data['binary_matrix']
-
-        # Set up mock
-        mock_cls().get_requirements.return_value = requirements
-        mock_cls().get_value_matrix.return_value = binary_matrix
+        mock_sheet = self.setup_mock_sheet(mock_getter)
 
         bwm = models.BinWM.from_google_sheet('dummy name')
 
-        self.assertIs(bwm._sheet, mock_cls())
+        actual = bwm._sheet
+        expected = mock_sheet
+        self.assertIs(actual, expected)
+
+    @mock.patch.object(models.BinWM, 'to_dataframe')
+    def test_save__triggers_update(self, mock_to_dataframe,
+                                   mock_getter):
+        """Save method wraps the google sheet update method."""
+        mock_sheet = self.setup_mock_sheet(mock_getter)
+
+        mock_to_dataframe.return_value = blank_df = pd.DataFrame()
+
+        bwm = models.BinWM.from_google_sheet('dummy name')
+        bwm.save()
+
+        mock_sheet.update.assert_called_once_with(blank_df)
 
 
 class TestBinWM_ExcelIntegration(unittest.TestCase):

@@ -105,14 +105,39 @@ class GSheetBinWM(BinWMSheet):
         else:
             return True
 
+    # TODO: Use properties considering we have getters and setters?
+    def set_requirements(self, requirements):
+        """
+        Parameters
+        ----------
+
+        requirements : list
+            List of N requirements
+        """
+        pass
+
     def get_requirements(self):
         return list(self.df.columns.values)
 
     def get_value_matrix(self):
         return np.matrix(self.df.to_numpy())
 
+    def set_value_matrix(self, matrix):
+        """
+        Parameters
+        ----------
+
+        matrix : np.matrix
+            Binary NxN matrix
+        """
+        pass
+
     def get_rows(self):
         return self._facade.get_rows(self._workbook_name)
+
+    def update(self, df):
+        facade = GSheetsFacade(self._workbook_name)
+        facade.sheet.set_dataframe(df, 'A1')
 
 
 class GSheetsFacade(object):
@@ -134,10 +159,14 @@ class GSheetsFacade(object):
             )
             return self._cached_client
 
+    @property
+    def sheet(self):
+        sheet = self._client.open(self._workbook_name).sheet1
+        return PyGSheetsGSpreadAdapter(sheet)
+
     def get_rows(self, workbook_name):
         """Return a 2D list of populated rows/columns."""
-        sheet = self._client.open(workbook_name).sheet1
-        return PyGSheetsGSpreadAdapter(sheet).get_all_values()
+        return self.sheet.get_all_values()
 
 
 class PyGSheetsGSpreadAdapter(object):
