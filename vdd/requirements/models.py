@@ -27,6 +27,7 @@ class BinWM(object):
     def from_google_sheet(cls, workbook_name):
         sheet = io.GSheetBinWM(workbook_name)
         inst = cls(*sheet.get_requirements())
+        inst._sheet = sheet
         inst._matrix = sheet.get_value_matrix()
         return inst
 
