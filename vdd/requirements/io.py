@@ -58,6 +58,17 @@ class GSheetBinWM(BinWMSheet):
             if x*y != x**2:
                 raise self.InvalidSource("Source matrix not square.")
 
+            # Check integrity of axes.
+            for r, c in zip(df.index.values, df.columns.values):
+                if r != c:
+                    raise self.InvalidSource(
+                        "Row and column labels misaligned."
+                    )
+            if len(set(df.index.values)) != len(df.index.values):
+                raise self.InvalidSource("Duplicate row labels.")
+            if len(set(df.columns.values)) != len(df.columns.values):
+                raise self.InvalidSource("Duplicate column labels.")
+
             mat = df.to_numpy()
 
             lower_tri = mat[np.tril_indices(n=x, k=0)]

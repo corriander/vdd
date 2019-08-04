@@ -41,7 +41,9 @@ class TestGSheetBinWM(unittest.TestCase):
         ('minimal_example_blank.json', True),
         ('minimal_example_different_cell_a1.json', True),
         ('minimal_example_extra_column.json', False),
-        ('minimal_example_extra_row.json', False)
+        ('minimal_example_extra_row.json', False),
+        ('minimal_example_duplicate_requirement.json', False),
+        ('minimal_example_misaligned_requirements.json', False)
     )
     @unpack
     def test_is_valid(self, fixture, expected):
