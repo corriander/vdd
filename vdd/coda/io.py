@@ -248,12 +248,19 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
 
     @property
     def characteristic_df(self):
+        """Dataframe containing characteristic definitions.
+
+        Each row is a characteristic (index) with min/max bounds for
+        the possible values.
+        """
         # Characteristics are the first row (sparse, excluding the
         # label in B1).
         label = self.df.columns[1]
         df = self._drop_df_columns_by_index(self.df, [0, 1])
         df = self._extract_characteristic_bounds(df)
-        return df.set_index('name')
+        df = df.set_index('name')
+        df.index.name = label
+        return df
 
     @staticmethod
     def _drop_df_columns_by_index(df, indices):
@@ -267,7 +274,12 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
     @property
     def requirement_df(self):
         """Dataframe containing the requirements with weighting."""
-        pass
+        label = self.df.iloc[2,0]
+        df = self.df.iloc[2:,:2]
+        df.columns = ['Requirement', 'Weight']
+        df = df.set_index('Requirement')
+        df.index.name = 'Requirement'
+        return df
 
     @property
     def relationship_df(self):
