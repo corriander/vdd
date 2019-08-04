@@ -7,13 +7,6 @@ import warnings
 import numpy as np
 import pandas as pd
 
-try:
-    import jinja
-except ImportError:
-    df_styling_available = False
-else:
-    df_styling_available = True
-
 from . import io
 
 
@@ -89,15 +82,6 @@ class BinWM(object):
         # Wrapper for testing
         print(string)
 
-    @staticmethod
-    def _set_df_styling(df):
-        # Center align and (attempt to) equally space columns
-        # This has an additional dependency which we just deal with by
-        # making this a no-op if it's not available.
-        if not df_styling_available:
-            warnings.warn("Install jinja for dataframe styling")
-            return df
-
         properties = {'width':'15em', 'text-align':'center'}
         styles = [{
             'selector': 'th',
@@ -114,12 +98,11 @@ class BinWM(object):
 
         pd.DataFrame
         """
-        df = pd.DataFrame(
+        return pd.DataFrame(
             data=self.matrix,
             columns=self.requirements,
             index=self.requirements
         )
-        return self._set_df_styling(df)
 
     def prompt(self, shuffle=True):
         """Step through an interactive prompt to calculate weighting.
