@@ -30,6 +30,12 @@ class BinWMSheet(ABC):
 
 
 class GSheetBinWM(BinWMSheet):
+    # TODO: This level of abstraction may not be necessary.
+    #       pygsheets supports getting as a dataframe; inconsistency
+    #       of method names aside in 2.0.2 (get_as_df, set_dataframe),
+    #       the index_col parameter doesn't seem to work as expected.
+    #       If this can be fixed in the adapter (or upstream) we might
+    #       just be able to grab the dataframe directly.
 
     class InvalidSource(Exception): pass
 
