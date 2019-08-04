@@ -284,7 +284,36 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
     @property
     def relationship_df(self):
         """Dataframe containing the relationships."""
-        pass
+        # Fill all column headers (currently they are sparse)
+
+        df = self.df
+        df.columns = pd.Series(df.columns).replace('', np.nan).ffill()
+
+        # Preserve the relationship fields (tolerance etc.)
+        relationship_fields = self.df.iloc[1,2:]
+
+        # Get rid of the first two rows (characteristic bounds and
+        # relationship field labels)
+        df = self.df.drop([0, 1, 2])
+
+        # Get rid of the requirements weighting column, we don't need
+        # it here.
+        df = self._drop_df_columns_by_index(df, [1])
+
+
+        # Requirements (index) column is currently NaN label
+        df.columns = df.columns.fillna('Requirements')
+        df = df.set_index('Requirements')
+
+        # Convert the columns into a multi-index
+        arrays = [relationship_fields.index.values,
+                  relationship_fields.values]
+        df.columns = pd.MultiIndex.from_tuples(
+            list(zip(*arrays)),
+            names=['characteristic', 'relationship_property']
+        )
+
+        return df
 
     def is_valid(self):
         return False
