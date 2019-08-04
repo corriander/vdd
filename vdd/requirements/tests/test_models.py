@@ -35,6 +35,7 @@ class TestBinWM(TestCase):
         data = self.get_fixture_data(fixture_fname)
         bwm = models.BinWM(*data['requirements'])
         bwm._matrix = np.matrix(data['binary_matrix'])
+        bwm.label = "My Requirements"
         return bwm
 
     def test_score__motorcycle_helmet(self):
@@ -112,6 +113,7 @@ class TestBinWM(TestCase):
             columns=['Requirement ' + str(x) for x in range(1, 4)],
             index=['Requirement ' + str(x) for x in range(1, 4)]
         )
+        expected.index.name = 'My Requirements'
 
         pd.testing.assert_frame_equal(actual, expected)
 

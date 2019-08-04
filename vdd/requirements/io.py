@@ -50,6 +50,7 @@ class GSheetBinWM(BinWMSheet):
                 df = pd.DataFrame.from_records(records)
                 df.columns = header
                 df = df.set_index(df.columns[0])
+                df.index.name = header[0]
             except:
                 raise self.InvalidSource("Can't construct dataframe.")
 
@@ -104,6 +105,10 @@ class GSheetBinWM(BinWMSheet):
             return False
         else:
             return True
+
+    def get_label(self):
+        """Get label for the axes (upper left cell)."""
+        return self.df.index.name
 
     def get_requirements(self):
         """Read the requirements from the dataframe representation."""
@@ -168,7 +173,8 @@ class GSheetsFacade(object):
         position : str
             Upper left cell for the dataframe position.
         """
-        self._sheet.set_dataframe(df, position)
+        self._sheet.set_dataframe(df, start=position, copy_index=True,
+                                  copy_head=True, fit=True)
 
 
 class PyGSheetsGSpreadAdapter(object):

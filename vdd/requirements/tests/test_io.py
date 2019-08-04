@@ -50,6 +50,23 @@ class TestGSheetBinWM(unittest.TestCase):
         sut = self.get_subject_under_test(fixture)
         self.assertIs(sut.is_valid(), expected)
 
+    def test_get_label(self):
+        """Check the custom label is picked up properly.
+
+        This is critical functionality for easy copy pasting in
+        jupyter notebooks; no label was OK but distortion happens very
+        easily if you copy back into the source spreadsheet due to the
+        missing cell in the dataframe visualisation.
+        """
+        sut = self.get_subject_under_test(
+            'minimal_example_custom_label.json'
+        )
+
+        actual = sut.get_label()
+        expected = 'Custom Label'
+
+        self.assertEqual(actual, expected)
+
     @data(
         'minimal_example_incomplete_tril.json',
         'minimal_example_populated.json',
@@ -160,7 +177,12 @@ class TestGSheetsFacade(unittest.TestCase):
         retval = self.sut.write_dataframe(dummy_df, 'A1')
 
         mock_sheet.set_dataframe.assert_called_once_with(
-                dummy_df, 'A1')
+                dummy_df,
+                start='A1',
+                copy_index=True,
+                copy_head=True,
+                fit=True
+        )
         self.assertIs(retval, None)
 
 

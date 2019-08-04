@@ -49,6 +49,7 @@ class BinWM(object):
         inst = cls(*sheet.get_requirements())
         inst._sheet = sheet
         inst._matrix = sheet.get_value_matrix()
+        inst.label = sheet.get_label()
         return inst
 
     @property
@@ -98,11 +99,13 @@ class BinWM(object):
 
         pd.DataFrame
         """
-        return pd.DataFrame(
+        df = pd.DataFrame(
             data=self.matrix,
             columns=self.requirements,
             index=self.requirements
         )
+        df.index.name = self.label
+        return df
 
     def prompt(self, shuffle=True):
         """Step through an interactive prompt to calculate weighting.
