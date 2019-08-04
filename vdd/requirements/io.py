@@ -13,6 +13,8 @@ ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
 class BinWMSheet(ABC):
 
+    score_column_name = 'Score'
+
     @abc.abstractmethod
     def is_valid(self):
         """Validate the source data."""
@@ -60,9 +62,7 @@ class GSheetBinWM(BinWMSheet):
             except:
                 raise self.InvalidSource("Can't construct dataframe.")
 
-            x, y = df.shape
-            if x*y != x**2:
-                raise self.InvalidSource("Source matrix not square.")
+            self._validate_df_shape(df)
 
             # Check integrity of axes.
             for r, c in zip(df.index.values, df.columns.values):
@@ -77,8 +77,8 @@ class GSheetBinWM(BinWMSheet):
 
             mat = df.to_numpy()
 
-            lower_tri = mat[np.tril_indices(n=x, k=0)]
-            upper_tri = mat[np.triu_indices(n=x, k=1)]
+            lower_tri = mat[np.tril_indices(n=len(df.index), k=0)]
+            upper_tri = mat[np.triu_indices(n=len(df.index), k=1)]
             # check all elements are '', '0' or '1'
             # if all zero, break
             # check for 1s in the lower tri (bad)
@@ -102,7 +102,7 @@ class GSheetBinWM(BinWMSheet):
                 )
 
             else:
-                mat[np.tril_indices(n=x, k=0)] = ''
+                mat[np.tril_indices(n=len(df.index), k=0)] = ''
                 if (mat == '').all():
                     df[:] = '0'
 
@@ -114,6 +114,27 @@ class GSheetBinWM(BinWMSheet):
 
             df = self._cached_df = df.astype(int)
             return df
+
+    def _validate_df_shape(self, df):
+        # Checks the dataframe shape is valid
+        #
+        # Side-effects
+        # ------------
+        #
+        # Checks for a final 'Score' column and drops it if it exists
+        #
+        # Raises
+        # ------
+        #
+        # self.InvalidSource
+        #   If not valid shape
+        x, y = df.shape
+        if x*y != x**2:
+            if df.columns[-1] == self.score_column_name:
+                df.drop(columns=self.score_column_name, inplace=True)
+                self._validate_df_shape(df)
+            else:
+                raise self.InvalidSource("Source matrix not square.")
 
     def is_valid(self):
         try:

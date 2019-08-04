@@ -43,7 +43,8 @@ class TestGSheetBinWM(unittest.TestCase):
         ('minimal_example_extra_column.json', False),
         ('minimal_example_extra_row.json', False),
         ('minimal_example_duplicate_requirement.json', False),
-        ('minimal_example_misaligned_requirements.json', False)
+        ('minimal_example_misaligned_requirements.json', False),
+        ('minimal_example_score_column.json', True),
     )
     @unpack
     def test_is_valid(self, fixture, expected):
@@ -140,6 +141,28 @@ class TestGSheetBinWM(unittest.TestCase):
         sut._facade.write_dataframe.assert_called_once_with(
             dummy_df, position='A1'
         )
+
+    def test__score_column_is_ignored(self):
+        """Score columns in the source spreadsheet are dropped.
+
+        This is so they can be re-created in a controlled fashion.
+        """
+        sut = self.get_subject_under_test(
+            'minimal_example_score_column.json'
+        )
+
+        actual = sut.df.columns.values
+        expected = np.array([
+            'Requirement 1',
+            'Requirement 2',
+            'Requirement 3'
+            # No score column
+        ])
+        np.testing.assert_array_equal(actual, expected)
+
+        # And just to check the pathological case where our test data
+        # has got out of whack and we've missed this:
+        assert 'Score' in sut._facade.get_rows()[0]
 
 
 @mock.patch.object(io.GSheetsFacade, '_sheet',

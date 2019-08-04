@@ -22,6 +22,8 @@ class BinWM(object):
     # access to the underlying data; this helps maintain integrity and
     # limits complexity in keeping it in sync with source data.
 
+    _fallback_score_column_name = 'Score'
+
     def __init__(self, *args, **kwargs):
         """
         Parameters
@@ -60,6 +62,8 @@ class BinWM(object):
     @property
     def score(self):
         """Calculate the relative score."""
+        # TODO: Use a series for this. Major version bump though.
+        #       1.x will probably be pandas everywhere.
         sum_x = self.matrix.sum(axis=1)
         sum_y = np.triu(1 - self.matrix, k=1).sum(axis=0).T
 
@@ -91,21 +95,18 @@ class BinWM(object):
         df.style.set_properties(**properties).set_table_styles(styles)
         return df
 
-    def to_dataframe(self):
-        """Convert to a pandas dataframe.
+    def get_score_as_series(self):
+        # Glue method until API changes; see score TODO
+        try:
+            score_column_name = self._sheet.score_column_name
+        except AttributeError:
+            if hasattr(self, '_sheet'):
+                raise
+            score_column_name = self._fallback_score_column_name
 
-        Returns
-        -------
-
-        pd.DataFrame
-        """
-        df = pd.DataFrame(
-            data=self.matrix,
-            columns=self.requirements,
-            index=self.requirements
-        )
-        df.index.name = self.label
-        return df
+        return pd.Series(self.score,
+                         index=self.requirements,
+                         name=score_column_name)
 
     def prompt(self, shuffle=True):
         """Step through an interactive prompt to calculate weighting.
@@ -168,3 +169,20 @@ class BinWM(object):
             )
 
         sheet.update(self.to_dataframe())
+
+    def to_dataframe(self):
+        """Convert to a pandas dataframe.
+
+        Returns
+        -------
+
+        pd.DataFrame
+        """
+        df = pd.DataFrame(
+            data=self.matrix,
+            columns=self.requirements,
+            index=self.requirements
+        )
+        df.index.name = self.label
+        df = df.assign(**{'Score': self.get_score_as_series()})
+        return df

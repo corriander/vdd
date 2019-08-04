@@ -105,13 +105,23 @@ class TestBinWM(TestCase):
         dataframe looks right.
         """
         bwm = self.setup_binary_weighting_matrix('Minimal Example')
+        expected_scores = bwm.score
 
         actual = bwm.to_dataframe()
 
+        expected_requirement_labels = [
+            'Requirement ' + str(x) for x in range(1, 4)
+        ]
+
+
         expected = pd.DataFrame(
-            data=[[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-            columns=['Requirement ' + str(x) for x in range(1, 4)],
-            index=['Requirement ' + str(x) for x in range(1, 4)]
+            data=[
+                [0, 0, 1, expected_scores[0]],
+                [0, 0, 1, expected_scores[1]],
+                [0, 0, 0, expected_scores[2]]
+            ],
+            columns=expected_requirement_labels + ['Score'],
+            index=expected_requirement_labels
         )
         expected.index.name = 'My Requirements'
 
