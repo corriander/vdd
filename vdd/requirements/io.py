@@ -35,7 +35,7 @@ class GSheetBinWM(BinWMSheet):
 
     def __init__(self, workbook_name):
         self._workbook_name = workbook_name
-        self._facade = GSheetsFacade()
+        self._facade = GSheetsFacade(workbook_name)
 
     @property
     def df(self):
@@ -105,48 +105,34 @@ class GSheetBinWM(BinWMSheet):
         else:
             return True
 
-    # TODO: Use properties considering we have getters and setters?
-    def set_requirements(self, requirements):
-        """
-        Parameters
-        ----------
-
-        requirements : list
-            List of N requirements
-        """
-        pass
-
     def get_requirements(self):
+        """Read the requirements from the dataframe representation."""
         return list(self.df.columns.values)
 
     def get_value_matrix(self):
+        """Read the value matrix from the dataframe representation."""
         return np.matrix(self.df.to_numpy())
 
-    def set_value_matrix(self, matrix):
-        """
-        Parameters
-        ----------
-
-        matrix : np.matrix
-            Binary NxN matrix
-        """
-        pass
-
     def get_rows(self):
-        return self._facade.get_rows(self._workbook_name)
+        """Return the rows in the source spreadsheet."""
+        return self._facade.get_rows()
 
     def update(self, df):
-        facade = GSheetsFacade(self._workbook_name)
-        facade.sheet.set_dataframe(df, 'A1')
+        """Bulk update the contents of the source spreadsheet."""
+        self._facade.write_dataframe(df, position='A1')
 
 
 class GSheetsFacade(object):
+    """Facade providing restrictred API to Google Sheets."""
 
     _credentials_path = os.path.join(
         xdg.XDG_CONFIG_HOME,
         'vdd',
         'gsheets_credentials.json'
     )
+
+    def __init__(self, workbook_name):
+        self._workbook_name = workbook_name
 
     @property
     def _client(self):
@@ -160,25 +146,45 @@ class GSheetsFacade(object):
             return self._cached_client
 
     @property
-    def sheet(self):
-        sheet = self._client.open(self._workbook_name).sheet1
-        return PyGSheetsGSpreadAdapter(sheet)
+    def _sheet(self):
+        try:
+            return self._cached_sheet
+        except AttributeError:
+            sheet = self._client.open(self._workbook_name).sheet1
+            self._cached_sheet = PyGSheetsGSpreadAdapter(sheet)
+            return self._cached_sheet
 
-    def get_rows(self, workbook_name):
+
+    def get_rows(self):
         """Return a 2D list of populated rows/columns."""
-        return self.sheet.get_all_values()
+        return self._sheet.get_all_values()
+
+    def write_dataframe(self, df, position):
+        """Write a dataframe to the worksheet at position.
+
+        Parameters
+        ----------
+
+        position : str
+            Upper left cell for the dataframe position.
+        """
+        self._sheet.set_dataframe(df, position)
 
 
 class PyGSheetsGSpreadAdapter(object):
     # pygsheet's sheet api is a bit poor and does odd things. this
-    # class provides a get_all_values method that behaves a little
-    # more like gspread's default behaviour for the similar method.
+    # class brings it a little closer to the gspread behaviour in some
+    # respects.
 
     def __init__(self, pygsheets_sheet):
-        self.sheet = pygsheets_sheet
+        self._sheet = pygsheets_sheet
+
+    def __getattr__(self, attr):
+        return getattr(self._sheet, attr)
 
     def get_all_values(self):
-        sheet = self.sheet
+        # TODO: Consider tackling this method's API upstream
+        sheet = self._sheet
         rows = sheet.get_all_values(include_tailing_empty_rows=False)
         # Strip all empty trailing columns
         rows = zip(*rows)
