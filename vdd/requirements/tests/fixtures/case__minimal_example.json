@@ -1,0 +1,12 @@
+{
+	"requirements": [
+		"Requirement 1",
+		"Requirement 2",
+		"Requirement 3"
+	],
+	"binary_matrix": [
+		[0, 0, 1],
+		[0, 0, 1],
+		[0, 0, 0]
+	]
+}
