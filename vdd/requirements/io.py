@@ -194,7 +194,7 @@ class GSheetsFacade(object):
             return self._cached_sheet
         except AttributeError:
             sheet = self._client.open(self._workbook_name).sheet1
-            self._cached_sheet = PyGSheetsGSpreadAdapter(sheet)
+            self._cached_sheet = WorksheetAdapter(sheet)
             return self._cached_sheet
 
 
@@ -215,7 +215,7 @@ class GSheetsFacade(object):
                                   copy_head=True, fit=True)
 
 
-class PyGSheetsGSpreadAdapter(object):
+class WorksheetAdapter(object):
     # pygsheet's sheet api is a bit poor and does odd things. this
     # class brings it a little closer to the gspread behaviour in some
     # respects.

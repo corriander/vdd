@@ -171,7 +171,7 @@ class TestGSheetsFacade(unittest.TestCase):
 
     def setup_mock_sheet(self, mock_property):
         mock_property.return_value = mock_sheet = mock.MagicMock(
-            spec=io.PyGSheetsGSpreadAdapter
+            spec=io.WorksheetAdapter
         )
         # Ensure we can call the methods we actually use in the facade
         # because the adapter passes through attribute lookups to the
@@ -211,13 +211,14 @@ class TestGSheetsFacade(unittest.TestCase):
         self.assertIs(retval, None)
 
 
-class TestPyGSheetsGSpreadAdapter(unittest.TestCase):
+class TestWorksheetAdapter(unittest.TestCase):
+    """Adapter for external (pygsheets) worksheet model."""
 
     def setUp(self):
         self.mock_sheet = mock.MagicMock(
             spec_set=pygsheets.worksheet.Worksheet
         )
-        self.sut = io.PyGSheetsGSpreadAdapter(self.mock_sheet)
+        self.sut = io.WorksheetAdapter(self.mock_sheet)
 
     def test_attribute_passthrough(self):
         """Attributes not explicitly overriden are passed through."""
@@ -232,7 +233,8 @@ class TestPyGSheetsGSpreadAdapter(unittest.TestCase):
         """Method papers over some deficiencies in the original.
 
         Specifically, the original didn't provide enough control over
-        trimming blank columns.
+        trimming blank columns. This wrapped version behaves more like
+        gspread's.
         """
         self.mock_sheet.get_all_values.return_value = [
             ['Requirements',
