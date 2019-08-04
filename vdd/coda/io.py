@@ -19,9 +19,7 @@ from .. import common
 class CODASheet(common.ABC):
 
     # ----------------------------------------------------------------
-    #
     # Simple record classes for transfering data from source.
-    #
     # ----------------------------------------------------------------
     CDefRecord = collections.namedtuple(
         'CDefRecord',
@@ -299,7 +297,6 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         # Get rid of the requirements weighting column, we don't need
         # it here.
         df = self._drop_df_columns_by_index(df, [1])
-
 
         # Requirements (index) column is currently NaN label
         df.columns = df.columns.fillna('Requirements')
