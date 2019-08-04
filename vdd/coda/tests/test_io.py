@@ -2,6 +2,7 @@ import unittest
 import os
 import sys
 
+import mock
 import numpy as np
 try:
     import pandas as pd
@@ -10,6 +11,7 @@ try:
 except ImportError:
     deps_present = False
 
+from ... import common
 from .. import io
 from . import DATA_DIR
 
@@ -128,6 +130,80 @@ class TestCompactExcelParser(unittest.TestCase):
             self.assertAlmostEqual(t1[3],
                                    [0.1, 0.3, 0.9][len(t2[3])-1])
             self.assertAlmostEqual(t1[4], t2[4])
+
+
+class TestGSheetCODA(unittest.TestCase):
+    """Provides an interface to a compact form model in Google Sheets.
+
+    The adapter behaves similarly to CompactExcelParser with scope for
+    extension to support updating the remote data. With this in mind,
+    these tests check that the subject matches or exceeds the
+    functionality of the reference implementation. The specifics of
+    the implementation will vary, however, as approach taken by
+    CompactExcelParser is brittle and results in tight coupling
+    (specifics of the format it returns, etc.).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.compact_excel_parser = io.CompactExcelParser(
+            os.path.join(DATA_DIR, 'demo_model_compact.xlsx')
+        )
+
+    def setUp(self):
+        self.mock_facade = mock.MagicMock(
+            spec_set=common.io.GSheetsFacade
+        )
+        self.sut = io.GSheetCODA('dummy workbook name')
+
+    def test_get_characteristics(self):
+        """Expect a list of 3-tuples describing characteristics.
+
+        The 3-tuples contain the name, and the min and max values of
+        the characteristics defined in the source.
+
+        There are three characteristics in the source, with the third
+        having no min/max values (NaN).
+        """
+        actual = self.sut.get_characteristics()
+        expected = self.compact_excel_parser.get_characteristics()
+
+        # We use numpy testing here because data contains NaNs.
+        np.assert_array_equal(np.array(actual), np.array(expected))
+
+    def test_get_requirements(self):
+        """Expect a list of 2-tuples describing requirements.
+
+        The 2-tuples contain each requirement and its
+        weighting/scoring.
+        """
+        actual = self.sut.get_requirements()
+        expected = self.compact_excel_parser.get_requirements()
+        self.assertEqual(actual, expected)
+
+    def test_get_relationships(self):
+        """Expect a list of 5/6-tuples describing relationships.
+
+        The tuples take one of two forms depending on the type of
+        relationship:
+
+         1. Min/Max: Correlation strength, relationship type, neutral
+            point.
+         2. Optimum: Correlation strength, relationship type, optimum
+            point, tolerance.
+        """
+        self.maxDiff = None
+        actual = self.sut.get_relationships()
+        expected = self.compact_excel_parser.get_relationships()
+
+        np.testing.assert_array_equal(
+            np.array(actual),
+            np.array(expected)
+        )
+
+    def test_is_valid(self):
+        self.assertFalse(self.sut.is_valid())
+
 
 
 if __name__ == '__main__':

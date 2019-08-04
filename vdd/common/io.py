@@ -1,7 +1,31 @@
+from __future__ import absolute_import
+
+import abc
 import os
 
 import pygsheets
 import xdg
+
+from .abstract import ABC
+
+
+class AbstractGSheet(ABC):
+
+    class InvalidSource(Exception): pass
+
+    def __init__(self, workbook_name):
+        self._workbook_name = workbook_name
+        self._facade = GSheetsFacade(workbook_name)
+
+    @abc.abstractmethod
+    def is_valid(self):
+        """Method reports whether the source worksheet is valid."""
+        return False
+
+    @abc.abstractmethod
+    def update(self, df):
+        """Method updates the source worksheet with a dataframe."""
+        return None
 
 
 class GSheetsFacade(object):
@@ -40,6 +64,9 @@ class GSheetsFacade(object):
     def get_rows(self):
         """Return a 2D list of populated rows/columns."""
         return self._sheet.get_all_values()
+
+    def get_sheet_as_dataframe(self):
+        return self._sheet.get_as_df()
 
     def write_dataframe(self, df, position):
         """Write a dataframe to the worksheet at position.

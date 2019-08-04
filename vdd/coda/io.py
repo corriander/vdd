@@ -1,3 +1,4 @@
+import abc
 import re
 import collections
 import itertools
@@ -12,8 +13,56 @@ except ImportError:
     warnings.warn('`pandas` and `xlrd` packages required for '
                   'spreadsheet support.')
 
+from .. import common
 
-class ExcelParser(object):
+
+class CODASheet(common.ABC):
+
+    # ----------------------------------------------------------------
+    #
+    # Simple record classes for transfering data from source.
+    #
+    # ----------------------------------------------------------------
+    CDefRecord = collections.namedtuple(
+        'CDefRecord',
+        ['name', 'min', 'max']
+    )
+
+    ReqRecord = collections.namedtuple(
+        'ReqRecord',
+        ['name', 'weight']
+    )
+
+    MinMaxRelRecord = collections.namedtuple(
+        'MinMaxRelRecord',
+        ['requirement', 'characteristic', 'relationship_type',
+         'correlation', 'neutral_value']
+    )
+
+    OptRelRecord = collections.namedtuple(
+        'OptRelRecord',
+        ['requirement', 'characteristic', 'relationship_type',
+         'correlation', 'optimum_value', 'tolerance']
+    )
+
+    @abc.abstractmethod
+    def get_characteristics(self):
+        """Characteristic definitions."""
+        return list[()]
+
+    @abc.abstractmethod
+    def get_requirements(self):
+        """Requirements and their weighting."""
+        return list[()]
+
+    @abc.abstractmethod
+    def get_relationships(self):
+        """Relationships between requirements and characteristics."""
+        return list[()]
+
+
+
+class ExcelParser(CODASheet):
 
     # 20 characteristic definitions are supported ((4*26)/5 cols)
     _MAX_COL = 'CZ'
@@ -79,7 +128,13 @@ class ExcelParser(object):
                         rec['name']) is not None:
                 warnings.warn("Picked up a default column name")
             else:
-                l.append((rec['name'], rec['min'], rec['max']))
+                l.append(
+                    self.CDefRecord(
+                        name=rec['name'],
+                        min=rec['min'],
+                        max=rec['max']
+                    )
+                )
         return l
 
     def get_relationships(self):
@@ -109,9 +164,9 @@ class ExcelParser(object):
                 continue
 
             if base_tup[2] == 'opt':
-                tup = base_tup + (row[j*n+3],)
+                tup = self.OptRelRecord(*(base_tup + (row[j*n+3],)))
             else:
-                tup = base_tup
+                tup = self.MinMaxRelRecord(*base_tup)
 
             relationships.append(tup)
 
@@ -119,7 +174,7 @@ class ExcelParser(object):
 
     def get_requirements(self):
         cols = ('Weighting', 'Requirements')
-        return [tuple(reversed(tuple(rec)[1:]))	# Exclude idx
+        return [self.ReqRecord(*reversed(tuple(rec)[1:])) # Exclude idx
                 for rec in self.df.loc[:,cols].to_records()]
 
 
@@ -170,11 +225,52 @@ class CompactExcelParser(ExcelParser):
                 continue
 
             if base_tup[2] == 'opt':
-                tup = base_tup + (row[j*n+2],)
+                tup = self.OptRelRecord(*(base_tup + (row[j*n+2],)))
             else:
-                tup = base_tup
+                tup = self.MinMaxRelRecord(*base_tup)
 
             relationships.append(tup)
 
         return relationships
 
+
+class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
+
+    @property
+    def df(self):
+        """Raw dataframe representing the CODA table."""
+        try:
+            return self._cached_df
+        except AttributeError:
+            self._cached_df = self._facade.get_sheet_as_dataframe()
+            return self._cached_df
+
+    @property
+    def characteristic_df(self):
+        """Dataframe containing the characteristic definitions."""
+        pass
+
+    @property
+    def requirement_df(self):
+        """Dataframe containing the requirements with weighting."""
+        pass
+
+    @property
+    def relationship_df(self):
+        """Dataframe containing the relationships."""
+        pass
+
+    def is_valid(self):
+        return False
+
+    def get_characteristics(self):
+        return [()]
+
+    def get_requirements(self):
+        return [()]
+
+    def get_relationships(self):
+        return [()]
+
+    def update(self, df):
+        return None
