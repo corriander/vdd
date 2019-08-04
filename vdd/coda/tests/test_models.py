@@ -11,7 +11,7 @@ except ModuleNotFoundError:
 from ddt import data, unpack, ddt
 
 from .. import models
-from . import DATAD
+from . import DATA_DIR
 
 
 @ddt
@@ -436,7 +436,7 @@ class TestCODACaseStudy1(unittest.TestCase):
             self.skipTest("`pandas` and `xlrd` required for "
                           "spreadsheet parsing")
         model = models.CODA.read_excel(
-            os.path.join(DATAD, 'demo_model_casestudy1.xlsx')
+            os.path.join(DATA_DIR, 'demo_model_casestudy1.xlsx')
         )
 
         for char, ref in zip(model.characteristics,

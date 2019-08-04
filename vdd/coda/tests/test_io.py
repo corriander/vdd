@@ -11,7 +11,7 @@ except ImportError:
     deps_present = False
 
 from .. import io
-from . import DATAD
+from . import DATA_DIR
 
 
 class TestExcelParser(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestExcelParser(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.path = path = os.path.join(DATAD, 'demo_model.xlsx')
+        cls.path = path = os.path.join(DATA_DIR, 'demo_model.xlsx')
         cls.parser = io.ExcelParser(path)
 
     def __getattr__(self, attr):
@@ -92,10 +92,10 @@ class TestCompactExcelParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.regular = io.ExcelParser(
-            os.path.join(DATAD, 'demo_model.xlsx')
+            os.path.join(DATA_DIR, 'demo_model.xlsx')
         )
         cls.compact = io.CompactExcelParser(
-            os.path.join(DATAD, 'demo_model_compact.xlsx')
+            os.path.join(DATA_DIR, 'demo_model_compact.xlsx')
         )
 
     def setUp(self):
