@@ -21,6 +21,14 @@ Install
 
 	pip install vdd
 
+Documentation
+-------
+
+Currently just stored in the repo.
+
+  - [Using Google Sheets for requirements matrices][binwm-gsheets]
+  - tbc
+
 Roadmap
 -------
 
@@ -31,6 +39,7 @@ Roadmap
   - Improved visualisation
   - Export CODA models to Excel template
   - House of Quality style requirement/characteristic weighting
+  - Pandas everywhere (v1.x)
 
 References
 ----------
@@ -45,3 +54,4 @@ Based on my own degree notes and open access literature:
 <!-- statuses -->
 [master-build-status]: https://dev.azure.com/corriander/code-projects/_apis/build/status/corriander.vdd?branchName=master
 [develop-build-status]: https://img.shields.io/azure-devops/build/corriander/d4da21a7-9ca1-4ecd-a01c-790771205d03/1/develop?label=develop&style=plastic
+[binwm-gsheets]: ./docs/gsheets-integration.md
