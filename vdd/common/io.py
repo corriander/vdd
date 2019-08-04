@@ -66,7 +66,7 @@ class GSheetsFacade(object):
         return self._sheet.get_all_values()
 
     def get_sheet_as_dataframe(self):
-        return self._sheet.get_as_df()
+        return self._sheet.get_as_df(include_tailing_empty=True)
 
     def write_dataframe(self, df, position):
         """Write a dataframe to the worksheet at position.

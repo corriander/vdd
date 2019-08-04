@@ -62,6 +62,7 @@ class CODASheet(common.ABC):
 
 
 
+
 class ExcelParser(CODASheet):
 
     # 20 characteristic definitions are supported ((4*26)/5 cols)
@@ -107,11 +108,11 @@ class ExcelParser(CODASheet):
                     dd['name'].append(s)
 
                 elif ridx == 1:
-                    dd['min'].append(df.loc[0, s])
+                    dd['min'].append(df.iloc[0, i])
 
                 elif ridx == 3:
                     # Final column of group; add construct to list.
-                    dd['max'].append(df.loc[0, s])
+                    dd['max'].append(df.iloc[0, i])
 
             self._cdf = tdf = pd.DataFrame.from_dict(dd)
             return tdf
@@ -193,11 +194,11 @@ class CompactExcelParser(ExcelParser):
                     dd['name'].append(s)
 
                 elif ridx == 1:
-                    dd['min'].append(df.loc[0, s])
+                    dd['min'].append(df.iloc[0, i])
 
                 elif ridx == 2:
                     # Final column of group; add construct to list.
-                    dd['max'].append(df.loc[0, s])
+                    dd['max'].append(df.iloc[0, i])
 
             self._cdf = tdf = pd.DataFrame.from_dict(dd)
             return tdf
@@ -247,8 +248,21 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
 
     @property
     def characteristic_df(self):
-        """Dataframe containing the characteristic definitions."""
-        pass
+        # Characteristics are the first row (sparse, excluding the
+        # label in B1).
+        label = self.df.columns[1]
+        df = self._drop_df_columns_by_index(self.df, [0, 1])
+        df = self._extract_characteristic_bounds(df)
+        return df.set_index('name')
+
+    @staticmethod
+    def _drop_df_columns_by_index(df, indices):
+        keep = set(range(df.shape[1])).difference(set(indices))
+        return df.iloc[:,list(sorted(keep))]
+
+    def _extract_characteristic_bounds(self, df):
+        # Glue to improve readibility; TODO: deprecate "_cdf_base"
+        return self._cdf_base(df)
 
     @property
     def requirement_df(self):
