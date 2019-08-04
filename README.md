@@ -1,7 +1,7 @@
 Tools for Value-Driven Design
 =============================
 
-![Build Status][master-build-status]
+[![Build Status][master-build-status]][azure-pipeline]
 
 
 Tools intended to help with modelling decisions in a value centric
@@ -52,6 +52,7 @@ Based on my own degree notes and open access literature:
 	<http://eprints.soton.ac.uk/id/eprint/361442>
 
 <!-- statuses -->
-[master-build-status]: https://dev.azure.com/corriander/code-projects/_apis/build/status/corriander.vdd?branchName=master
-[develop-build-status]: https://img.shields.io/azure-devops/build/corriander/d4da21a7-9ca1-4ecd-a01c-790771205d03/1/develop?label=develop&style=plastic
+[azure-pipeline]: https://dev.azure.com/corriander/github-public/_build/latest?definitionId=2&branchName=master
+[master-build-status]: https://dev.azure.com/corriander/github-public/_apis/build/status/corriander.vdd?branchName=master
+[develop-build-status]: https://img.shields.io/azure-devops/build/corriander/8c97c580-4bf1-4e14-80b2-1be44ecc86f6/2/develop?label=develop
 [binwm-gsheets]: ./docs/gsheets-integration.md
