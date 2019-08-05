@@ -182,24 +182,27 @@ class CompactExcelParser(ExcelParser):
     _NCOLS_CHAR = 3
 
     def _cdf_base(self, df):
-            dd = collections.defaultdict(list)
-            for i, s in enumerate(df.columns):
+        dd = collections.defaultdict(list)
+        sorted_columns = ['name', 'min', 'max']
+        for i, s in enumerate(df.columns):
 
-                ridx = i % self._NCOLS_CHAR # Relative index
+            ridx = i % self._NCOLS_CHAR # Relative index
 
-                if ridx == 0:
-                    # Initial column of group; begin construct.
-                    dd['name'].append(s)
+            if ridx == 0:
+                # Initial column of group; begin construct.
+                dd[sorted_columns[ridx]].append(s)
 
-                elif ridx == 1:
-                    dd['min'].append(df.iloc[0, i])
+            elif ridx == 1:
+                dd[sorted_columns[ridx]].append(df.iloc[0, i])
 
-                elif ridx == 2:
-                    # Final column of group; add construct to list.
-                    dd['max'].append(df.iloc[0, i])
+            elif ridx == 2:
+                # Final column of group; add construct to list.
+                dd[sorted_columns[ridx]].append(df.iloc[0, i])
 
-            self._cdf = tdf = pd.DataFrame.from_dict(dd)
-            return tdf
+        # The defaultdict doesn't guarantee order.
+        unordered_transformed_df = pd.DataFrame.from_dict(dd)
+        self._cdf = unordered_transformed_df[sorted_columns]
+        return self._cdf
 
     def _parse_row(self, reqts, chars):
         n = self._NCOLS_CHAR
@@ -258,6 +261,10 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         df = self._extract_characteristic_bounds(df)
         df = df.set_index('name')
         df.index.name = label
+
+        df = df.replace('', np.nan)
+        df['max'] = df['max'].astype(float)
+        df['min'] = df['min'].astype(float)
         return df
 
     @staticmethod
@@ -316,10 +323,12 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         return False
 
     def get_characteristics(self):
-        return [()]
+        return [self.CDefRecord(*record)
+                for record in self.characteristic_df.itertuples()]
 
     def get_requirements(self):
-        return [()]
+        return [self.ReqRecord(*record)
+                for record in self.requirement_df.itertuples()]
 
     def get_relationships(self):
         return [()]
