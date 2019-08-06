@@ -299,13 +299,16 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
 
         # Get rid of the first two rows (characteristic bounds and
         # relationship field labels)
-        df = self.df.drop([0, 1, 2])
+        df = self.df.drop([0, 1])
 
         # Get rid of the requirements weighting column, we don't need
         # it here.
         df = self._drop_df_columns_by_index(df, [1])
 
         # Requirements (index) column is currently NaN label
+        # TODO: "Requirements" should be singular; but, this should
+        #       also be up to the user to label and we just base it
+        #       off whatever is in that cell.
         df.columns = df.columns.fillna('Requirements')
         df = df.set_index('Requirements')
 
@@ -320,18 +323,102 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         return df
 
     def is_valid(self):
+        # Check type notation is OK (was done in parse_row).
         return False
 
     def get_characteristics(self):
+        """List characteristics and bounds defined in the source.
+
+        Characteristic definitions include the name and bounding
+        (min/max) values.
+
+        Returns
+        -------
+
+        list of GSheetCODA.CDefRecord
+        """
         return [self.CDefRecord(*record)
                 for record in self.characteristic_df.itertuples()]
 
     def get_requirements(self):
+        """List requirements and their weights defined in the source.
+
+        Requirements are defined alongside weighting values. These may
+        arise from other analysis (see requirements subpackage).
+
+        Returns
+        -------
+
+        list of GSheetCODA.ReqRecord
+        """
         return [self.ReqRecord(*record)
                 for record in self.requirement_df.itertuples()]
 
     def get_relationships(self):
-        return [()]
+        """Get list relationships defined in the source data.
+
+        Relationships are returned column-wise (i.e. will be grouped by
+        characteristic, not requirement) and are variable type.
+
+        Returns
+        -------
+
+        list of GSheetCODA.MinMaxRelRecord or GSheetCODA.OptRelRecord
+        """
+        type_lookup = {'+': 'max', 'o': 'opt', '-': 'min'}
+
+        coerced_records = []
+        df = self.relationship_df
+        for ch in df.columns.unique(level='characteristic'):
+            # Each characteristic has 3 sub-columns so we create a
+            # dataframe, make sure it's NaNs not blanks and drop any
+            # rows that are empty.
+            ch_cols = df[ch].replace('', np.nan).dropna(how='all')
+
+            for record in ch_cols.to_records():
+
+                req = record[0] # Ignore the specific field name
+
+                # Derive the relationship type
+                type_symbolic = record['Relationship Type']
+                type_name = type_lookup[type_symbolic[0]]
+
+                target_value = record['Target Value']
+
+                tolerance = record['Tolerance']
+                if np.isnan(tolerance):
+                    tolerance = None
+                elif type_name != 'opt':
+                    warnings.warn("Tolerance specified for a "
+                                  "non-optimising relationship "
+                                  "({}, {})".format(ch, req))
+                    tolerance = None
+
+                # Fix this variable record length? It's better now
+                # it's a list of variable type.
+                if type_name in ('min', 'max'):
+                    coerced_records.append(
+                        self.MinMaxRelRecord(
+                            characteristic=ch,
+                            requirement=req,
+                            relationship_type=type_name,
+                            correlation=type_symbolic,
+                            neutral_value=target_value
+                        )
+                    )
+                elif type_name == 'opt':
+                    coerced_records.append(
+                        self.OptRelRecord(
+                            characteristic=ch,
+                            requirement=req,
+                            relationship_type=type_name,
+                            correlation=type_symbolic,
+                            optimum_value=target_value,
+                            tolerance=tolerance
+                        )
+                    )
+
+        return coerced_records
 
     def update(self, df):
         return None
