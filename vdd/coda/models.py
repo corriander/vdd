@@ -278,7 +278,8 @@ class CODA(object):
         for element in 'requirement','characteristic','relationship':
             for args in getattr(parser, 'get_{}s'.format(element))():
                 if element == 'characteristic':
-                    # FIXME: Hack
+                    # add_characteristics has a bounds parameter, not
+                    # separate min, max params.
                     args = (args[0],) + (args[1:3],)
                 getattr(model, 'add_{}'.format(element))(*args)
 

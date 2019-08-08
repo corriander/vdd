@@ -11,6 +11,7 @@ except ModuleNotFoundError:
 from ddt import data, unpack, ddt
 
 from .. import models
+from .. import io
 from . import DATA_DIR
 
 
@@ -337,6 +338,96 @@ class TestCODA(unittest.TestCase):
         else:
             self.assertRaises(exception, inst.add_relationship,
                               rlkup, clkup, 'max', 1.0, 1.0)
+
+    @mock.patch.object(models.CODA, 'add_relationship')
+    @mock.patch.object(models.CODA, 'add_characteristic')
+    @mock.patch.object(models.CODA, 'add_requirement')
+    def test_read_excel(self, mock_add_requirement,
+                        mock_add_characteristic,
+                        mock_add_relationship):
+        """Constructor adds elements in turn from the parser.
+
+        The parser provides three methods:
+
+          - get_requirements
+          - get_characteristics
+          - get_relationships
+
+        These all return records defined within io.CODASheet.
+
+        The constructor calls these methods on the parser and uses the
+        results to feed arguments to the add_requirement,
+        add_characteristic and add_relationship methods on the CODA
+        class.
+
+        This unit test mocks the parser and ensures the known return
+        values for these get methods are passed to the add methods in
+        the correct fashion.
+        """
+        dummy_records = {
+            'requirements': [
+                io.CODASheet.ReqRecord('Requirement 1', 0.33),
+                io.CODASheet.ReqRecord('Requirement 2', 0.5),
+                io.CODASheet.ReqRecord('Requirement 3', 0.17),
+            ],
+            'characteristics': [
+                io.CODASheet.CDefRecord('Characteristic 1', 1, 5),
+                io.CODASheet.CDefRecord('Characteristic 2', 10, 20),
+            ],
+            'relationships': [
+                io.CODASheet.MinMaxRelRecord(
+                    'Requirement 1',
+                    'Characteristic 1',
+                    'min',
+                    '---', # TODO: Remove redundant information
+                    3
+                ),
+                io.CODASheet.OptRelRecord(
+                    'Requirement 2',
+                    'Characteristic 1',
+                    'opt',
+                    'ooo',
+                    13,
+                    1,
+                ),
+                io.CODASheet.MinMaxRelRecord(
+                    'Requirement 3',
+                    'Characteristic 2',
+                    'max',
+                    '+++',
+                    3
+                ),
+            ]
+        }
+
+        stub_parser = mock.MagicMock(spec_set=io.CompactExcelParser)
+        for s in 'requirements', 'characteristics', 'relationships':
+            method = getattr(stub_parser, 'get_{}'.format(s))
+            method.return_value = dummy_records[s]
+        mock_parser_class = mock.Mock()
+        mock_parser_class.return_value = stub_parser
+
+        sut = models.CODA.read_excel('/dummy/path',
+                                     parser_class=mock_parser_class)
+
+        mock_parser_class.assert_called_once_with('/dummy/path')
+        mock_add_requirement.assert_has_calls([
+            mock.call('Requirement 1', 0.33),
+            mock.call('Requirement 2', 0.5),
+            mock.call('Requirement 3', 0.17),
+        ])
+        mock_add_characteristic.assert_has_calls([
+            mock.call('Characteristic 1', (1, 5)),
+            mock.call('Characteristic 2', (10, 20)),
+        ])
+        mock_add_relationship.assert_has_calls([
+            mock.call('Requirement 1', 'Characteristic 1', 'min',
+                      '---', 3),
+            mock.call('Requirement 2', 'Characteristic 1', 'opt',
+                      'ooo', 13, 1),
+            mock.call('Requirement 3', 'Characteristic 2', 'max',
+                      '+++', 3),
+        ])
 
     def test__merit(self):
         """Returns a matrix of merit values for design relationships.
