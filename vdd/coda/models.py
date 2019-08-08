@@ -29,6 +29,10 @@ except NameError:
 class CODA(object):
 
     @classmethod
+    def from_excel(cls, path, parser_class=io.CompactExcelParser):
+        return cls.read_excel(path, parser_class)
+
+    @classmethod
     def read_excel(cls, path, parser_class=io.CompactExcelParser):
         """Import model from spreadsheet."""
         parser = parser_class(path)
