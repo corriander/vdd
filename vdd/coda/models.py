@@ -28,6 +28,21 @@ except NameError:
 
 class CODA(object):
 
+    @classmethod
+    def read_excel(cls, path, parser_class=io.CompactExcelParser):
+        """Import model from spreadsheet."""
+        parser = parser_class(path)
+        model = cls()
+        for element in 'requirement','characteristic','relationship':
+            for args in getattr(parser, 'get_{}s'.format(element))():
+                if element == 'characteristic':
+                    # add_characteristics has a bounds parameter, not
+                    # separate min, max params.
+                    args = (args[0],) + (args[1:3],)
+                getattr(model, 'add_{}'.format(element))(*args)
+
+        return model
+
     @property
     def matrix(self):
         """Matrix of relationship functions.
@@ -269,21 +284,6 @@ class CODA(object):
         """Return True if the model matrix is the same as another's.
         """
         return self.matrix == other.matrix
-
-    @classmethod
-    def read_excel(cls, path, parser_class=io.CompactExcelParser):
-        """Import model from spreadsheet."""
-        parser = parser_class(path)
-        model = cls()
-        for element in 'requirement','characteristic','relationship':
-            for args in getattr(parser, 'get_{}s'.format(element))():
-                if element == 'characteristic':
-                    # add_characteristics has a bounds parameter, not
-                    # separate min, max params.
-                    args = (args[0],) + (args[1:3],)
-                getattr(model, 'add_{}'.format(element))(*args)
-
-        return model
 
     def _create_base_matrix(self):
         # Create an array sized by the shape of the coda model and
