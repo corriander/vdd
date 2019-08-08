@@ -30,23 +30,72 @@ class CODA(object):
 
     @classmethod
     def from_excel(cls, path, parser_class=io.CompactExcelParser):
+        """Construct a CODA model from an Excel workbook.
+
+        Parameters
+        ----------
+
+        path : str
+            Filesystem path to the Excel workbook
+
+        Returns
+        -------
+
+        CODA
+            Populated CODA model
+        """
         return cls.read_excel(path, parser_class)
+
+    @classmethod
+    def from_google_sheet(cls, workbook_name):
+        """Construct a CODA model from a Google Sheet.
+
+        Parameters
+        ----------
+
+        workbook_name : str
+            Name of shared Google Sheet
+
+        Returns
+        -------
+
+        CODA
+            Populated CODA model
+
+        Notes
+        -----
+
+        The Google Sheet must be shared with a service account for
+        which credentials are provided in the configuration
+        directory.
+        """
+        sheet = cls._get_sheet(workbook_name)
+        model = cls()
+        return cls._transfer_elements(model, sheet)
 
     @classmethod
     def read_excel(cls, path, parser_class=io.CompactExcelParser):
         """Import model from spreadsheet."""
         parser = parser_class(path)
         model = cls()
+        return cls._transfer_elements(model, parser)
+
+    @staticmethod
+    def _transfer_elements(inst, source):
+        # Helper method for the constructors.
         for element in 'requirement','characteristic','relationship':
-            for args in getattr(parser, 'get_{}s'.format(element))():
+            for args in getattr(source, 'get_{}s'.format(element))():
                 if element == 'characteristic':
                     # add_characteristics has a bounds parameter, not
                     # separate min, max params.
                     args = (args[0],) + (args[1:3],)
-                getattr(model, 'add_{}'.format(element))(*args)
+                getattr(inst, 'add_{}'.format(element))(*args)
+        return inst
 
-        return model
 
+    # ----------------------------------------------------------------
+    # Properties
+    # ----------------------------------------------------------------
     @property
     def matrix(self):
         """Matrix of relationship functions.
@@ -174,6 +223,9 @@ class CODA(object):
         vec = np.matrix([[reqt.weight for reqt in self.requirements]])
         return vec.T # Return as column vector
 
+    # ----------------------------------------------------------------
+    # Methods
+    # ----------------------------------------------------------------
     def add_requirement(self, name, weight, normalise=True):
         """Add a requirement to the model.
 
