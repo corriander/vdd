@@ -219,11 +219,13 @@ class TestGSheetCODA(unittest.TestCase):
         )
 
     def test_is_valid(self, mock_df_property):
-        self.skipTest("Not implemented.")
+        """Check the source sheet is valid.
 
-    def test_update(self, mock_df_property):
-        self.skipTest("Not implemented.")
-
+        Note that only relationship_type fields are checks for symbol
+        correctness currently.
+        """
+        mock_df_property.return_value = self.reference_df
+        self.assertTrue(self.sut.is_valid())
 
 
 if __name__ == '__main__':

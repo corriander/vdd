@@ -323,8 +323,24 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         return df
 
     def is_valid(self):
-        # Check type notation is OK (was done in parse_row).
-        return False
+        """Relationship Type in source spreadsheet are all valid."""
+        # Check type notation is OK (done in parse_row for excel
+        # parsers).
+        pattern = re.compile(r'(^\++$|^-+$|^o+$)|^$')
+        vectorised_match = np.vectorize(
+            lambda x: pattern.match(x) is not None
+        )
+        df = self.relationship_df
+
+
+        filt = df.columns.get_level_values(1) == 'Relationship Type'
+        values = df.iloc[:,filt].values
+        if not vectorised_match(values).all():
+            warnings.warn(
+                """Invalid relationship_type notation in source."""
+            )
+            return False
+        return True
 
     def get_characteristics(self):
         """List characteristics and bounds defined in the source.
