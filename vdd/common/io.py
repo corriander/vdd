@@ -38,6 +38,11 @@ class GSheetsFacade(object):
     )
 
     def __init__(self, workbook_name):
+        # We shouldn't really init the facade with a workbook name.
+        # It's here to support the retention of the sheet, but perhaps
+        # we just store fetched sheets and make them available for
+        # referencing, specifying the workbook name each time we want
+        # to operate on it.
         self._workbook_name = workbook_name
 
     @property

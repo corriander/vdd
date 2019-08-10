@@ -59,8 +59,6 @@ class CODASheet(common.ABC):
         return list[()]
 
 
-
-
 class ExcelParser(CODASheet):
 
     # 20 characteristic definitions are supported ((4*26)/5 cols)
@@ -240,7 +238,11 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
 
     @property
     def df(self):
-        """Raw dataframe representing the CODA table."""
+        """Raw dataframe representing the CODA table.
+
+        The raw dataframe treats all cells in the source sheet as
+        strings.
+        """
         try:
             return self._cached_df
         except AttributeError:
@@ -284,11 +286,16 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         df.columns = ['Requirement', 'Weight']
         df = df.set_index('Requirement')
         df.index.name = 'Requirement'
+        df['Weight'] = df['Weight'].astype(float)
         return df
 
     @property
     def relationship_df(self):
-        """Dataframe containing the relationships."""
+        """Dataframe containing relationships defined in the source.
+
+        Relationship property / subcolumns are coerced to the
+        appropriate data type.
+        """
         # Fill all column headers (currently they are sparse)
 
         df = self.df
@@ -319,6 +326,14 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
             list(zip(*arrays)),
             names=['characteristic', 'relationship_property']
         )
+
+        # Convert the column datatypes
+        for header in 'Target Value', 'Tolerance':
+            col_idxs = df.columns.get_level_values(1)==header
+            cols = df.iloc[:,col_idxs]
+            cols = cols.replace('', np.nan)
+            cols = cols.astype(float)
+            df.iloc[:,col_idxs] = cols
 
         return df
 
@@ -402,7 +417,7 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
                 target_value = record['Target Value']
 
                 tolerance = record['Tolerance']
-                if np.isnan(tolerance):
+                if pd.isnull(tolerance):
                     tolerance = None
                 elif type_name != 'opt':
                     warnings.warn("Tolerance specified for a "

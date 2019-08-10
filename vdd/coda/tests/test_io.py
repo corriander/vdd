@@ -154,8 +154,10 @@ class TestGSheetCODA(unittest.TestCase):
             demo_model_path
         )
 
-        raw_df = pd.read_excel(demo_model_path)
-        df = raw_df.fillna('')
+        df = pd.read_excel(demo_model_path)
+        df = df.fillna('')
+        df = df.astype(str)
+
         df.columns = [
             column if not column.startswith('Unnamed') else ''
             for column in df.columns
