@@ -386,7 +386,7 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
                 for record in self.requirement_df.itertuples()]
 
     def get_relationships(self):
-        """Get list relationships defined in the source data.
+        """List relationships defined in the source.
 
         Relationships are returned column-wise (i.e. will be grouped by
         characteristic, not requirement) and are variable type.
