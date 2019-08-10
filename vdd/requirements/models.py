@@ -32,11 +32,11 @@ class BinWM(object):
         *args : str
             Requirements provided as N positional args.
 
-        matrix : np.matrix, optional
-            Square binary matrix for N requirements.
+        matrix : np.array, optional
+            2D, square NxN binary matrix for N requirements.
         """
         self.requirements = args
-        default_matrix = np.matrix(np.zeros([len(args), len(args)]))
+        default_matrix = np.zeros([len(args), len(args)])
         matrix = kwargs.get('matrix', default_matrix)
         self._matrix = matrix
 

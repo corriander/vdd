@@ -34,7 +34,7 @@ class TestBinWM(TestCase):
         fixture_fname = self.model_data_fixtures[key]
         data = self.get_fixture_data(fixture_fname)
         bwm = models.BinWM(*data['requirements'])
-        bwm._matrix = np.matrix(data['binary_matrix'])
+        bwm._matrix = np.array(data['binary_matrix'])
         bwm.label = "My Requirements"
         return bwm
 
@@ -153,7 +153,7 @@ class TestBinWM_GoogleSheetsIntegration(TestCase):
         # Get reference data
         data = self.get_fixture_data('case__minimal_example.json')
         requirements = data['requirements']
-        binary_matrix = np.matrix(data['binary_matrix'])
+        binary_matrix = np.array(data['binary_matrix'])
 
         # Set up mock
         mock_sheet = mock.MagicMock(spec_set=io.GSheetBinWM)
