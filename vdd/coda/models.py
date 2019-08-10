@@ -92,6 +92,10 @@ class CODA(object):
                 getattr(inst, 'add_{}'.format(element))(*args)
         return inst
 
+    @staticmethod
+    def _get_sheet(workbook_name):
+        # TODO: remove redundancy with BinWM
+        return io.GSheetCODA(workbook_name)
 
     # ----------------------------------------------------------------
     # Properties
