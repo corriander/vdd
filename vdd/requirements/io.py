@@ -19,7 +19,7 @@ class BinWMSheet(common.ABC):
     @abc.abstractmethod
     def get_value_matrix(self):
         """Get the matrix of decisions from the source data."""
-        return np.matrix([])
+        return np.array([[]])
 
 
 class GSheetBinWM(BinWMSheet, common.io.AbstractGSheet):
@@ -139,7 +139,7 @@ class GSheetBinWM(BinWMSheet, common.io.AbstractGSheet):
 
     def get_value_matrix(self):
         """Read the value matrix from the dataframe representation."""
-        return np.matrix(self.df.to_numpy())
+        return self.df.to_numpy()
 
     def get_rows(self):
         """Return the rows in the source spreadsheet."""

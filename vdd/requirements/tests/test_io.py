@@ -109,7 +109,7 @@ class TestGSheetBinWM(unittest.TestCase):
     def test_get_value_matrix__valid(self, fixture, expected_triu):
         """The binary matrix is obtained from valid sources."""
         a, b, c = expected_triu
-        expected = np.matrix([
+        expected = np.array([
             [0, a, b],
             [0, 0, c],
             [0, 0, 0]
