@@ -452,4 +452,4 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         return coerced_records
 
     def update(self, df):
-        return None
+        raise NotImplementedError
