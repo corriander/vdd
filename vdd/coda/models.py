@@ -161,7 +161,7 @@ class CODA(object):
         """
         # XXX: It would be really nice if the mutability of this
         #	   propagated down.
-        return np.matrix([[c.value for c in self.characteristics]])
+        return np.array([[c.value for c in self.characteristics]])
     @parameter_value.setter
     def parameter_value(self, value):
         m = self.shape[1]
@@ -206,7 +206,9 @@ class CODA(object):
         cf = self.correlation
         scf = cf.sum(axis=1)
         mv = self._merit()
-        return np.divide(np.multiply(mv, cf).sum(axis=1), scf)
+        array = np.divide(np.multiply(mv, cf).sum(axis=1), scf)
+        vector = array[:,np.newaxis]
+        return vector
 
     @property
     def shape(self):
@@ -224,7 +226,7 @@ class CODA(object):
         Each requirement contributions to the overall model according
         to its weight.
         """
-        vec = np.matrix([[reqt.weight for reqt in self.requirements]])
+        vec = np.array([[reqt.weight for reqt in self.requirements]])
         return vec.T # Return as column vector
 
     # ----------------------------------------------------------------
@@ -350,7 +352,7 @@ class CODA(object):
         # populate with Null relationships.
         array = np.empty(self.shape, dtype=object)
         array[:] = CODANull()
-        return np.matrix(array)
+        return array
 
     def _merit(self):
         vfunc = np.vectorize(lambda f, x: f(x))

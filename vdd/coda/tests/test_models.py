@@ -96,7 +96,8 @@ class TestCODA(unittest.TestCase):
         i.e. (n, m) where n is the number of requirements, and m the
         number of characteristics.
         """
-        self.assertIsInstance(self.inst.correlation, np.matrix)
+        self.assertIsInstance(self.inst.correlation, np.ndarray)
+        self.assertEqual(self.inst.correlation.ndim, 2)
         self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
 
@@ -114,7 +115,7 @@ class TestCODA(unittest.TestCase):
         coda matrix, so characterstic parameter values should reflect
         this to be unambiguous.
         """
-        self.assertIsInstance(self.inst.parameter_value, np.matrix)
+        self.assertIsInstance(self.inst.parameter_value, np.ndarray)
         self.assertEqual(self.inst.parameter_value.shape,
                          (1, self.inst.shape[1]))
         self.assertTrue((self.inst.parameter_value==self.values).all())
@@ -123,7 +124,6 @@ class TestCODA(unittest.TestCase):
         (np.array([2.0, 10, 2, 7.5, 0.3]), None),
         (np.array([[2.0, 10, 2, 7.5, 0.3]]), None),
         (np.array([[2.0, 10, 2, 7.5, 0.3]]).T, None),
-        (np.matrix([2.0, 10, 2, 7.5, 0.3]), None),
         ([2.0, 10, 2, 7.5, 0.3], None),
         (tuple([2.0, 10, 2, 7.5, 0.3]), None),
         (set([2.0, 10, 2, 7.5, 0.3]), ValueError),
@@ -170,18 +170,18 @@ class TestCODA(unittest.TestCase):
         """
         correlation, merit = mocks
 
-        a = np.matrix(np.random.rand(3,2))
-        correlation.return_value = merit.return_value = np.matrix(a)
+        a = np.random.rand(3,2)
+        correlation.return_value = merit.return_value = a
 
         # numerator
-        num = np.multiply(a, a).sum(axis=1)
+        num = np.multiply(a, a).sum(axis=1, keepdims=True)
 
         # denominator
-        den = a.sum(axis=1)
+        den = a.sum(axis=1, keepdims=True)
 
         expected = np.divide(num, den)
 
-        self.assertIsInstance(self.inst.satisfaction, np.matrix)
+        self.assertIsInstance(self.inst.satisfaction, np.ndarray)
         self.assertEqual(self.inst.satisfaction.shape, (3, 1))
         np.testing.assert_array_almost_equal(self.inst.satisfaction,
                                              expected)
@@ -201,7 +201,7 @@ class TestCODA(unittest.TestCase):
         coda matrix, so requirement weights should reflect this to be
         unambiguous.
         """
-        self.assertIsInstance(self.inst.weight, np.matrix)
+        self.assertIsInstance(self.inst.weight, np.ndarray)
         self.assertEqual(self.inst.weight.shape,
                          (self.inst.shape[0], 1))
         # Note we must transpose the weight column vector to compare
@@ -442,7 +442,8 @@ class TestCODA(unittest.TestCase):
         "Internal" method because raw merit values are not considered
         particularly useful on their own at this point.
         """
-        self.assertIsInstance(self.inst._merit(), np.matrix)
+        self.assertIsInstance(self.inst._merit(), np.ndarray)
+        self.assertEqual(self.inst._merit().ndim, 2)
         self.assertEqual(self.inst._merit().shape, self.inst.shape)
         self.assertTrue((self.inst._merit()==self.merit).all())
 
@@ -515,8 +516,8 @@ class TestCODACaseStudy1(unittest.TestCase):
     def test_sum_of_correlations(self):
         """Sum of correlation factors for all requirements."""
         np.testing.assert_array_almost_equal(
-            self.wheel.correlation.sum(axis=1),
-            np.matrix([2.4, 1.2, 3.0, 1.3, 1.3]).T
+            self.wheel.correlation.sum(axis=1, keepdims=True),
+            np.array([[2.4, 1.2, 3.0, 1.3, 1.3]]).T
         )
 
     def test_read_excel(self):
