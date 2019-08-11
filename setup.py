@@ -33,7 +33,7 @@ setup(
     # The project's main homepage.
     url='https://github.com/corriander/vdd',
 
-    download_url='https://github.com/corriander/vdd/archive/v0.2.0.tar.gz',
+    download_url='https://github.com/corriander/vdd/archive/v0.3.0.tar.gz',
 
     # Author details
     author='Alex Corrie',
@@ -83,7 +83,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy'],
+    install_requires=['numpy', 'pandas', 'pygsheets'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
