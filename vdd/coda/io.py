@@ -437,7 +437,7 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
                 elif type_name != 'opt':
                     warnings.warn("Tolerance specified for a "
                                   "non-optimising relationship "
-                                  "({}, {})".format(ch, req))
+                                  "({}, {})".format(req, ch))
                     tolerance = None
 
                 # Fix this variable record length? It's better now
