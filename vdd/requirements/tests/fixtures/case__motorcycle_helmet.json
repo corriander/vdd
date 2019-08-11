@@ -1,0 +1,18 @@
+{
+	"requirements": [
+		"Light weight",
+		"Impact resistance",
+		"Good visibility",
+		"Low noise",
+		"Easy to put on/remove",
+		"Comfortable"
+	],
+	"binary_matrix": [
+		[0, 0, 0, 1, 0, 0],
+		[0, 0, 1, 1, 1, 1],
+		[0, 0, 0, 1, 0, 0],
+		[0, 0, 0, 0, 1, 1],
+		[0, 0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0, 0]
+	]
+}

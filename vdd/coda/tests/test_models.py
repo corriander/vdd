@@ -11,7 +11,8 @@ except ModuleNotFoundError:
 from ddt import data, unpack, ddt
 
 from .. import models
-from . import DATAD
+from .. import io
+from . import DATA_DIR
 
 
 @ddt
@@ -95,7 +96,8 @@ class TestCODA(unittest.TestCase):
         i.e. (n, m) where n is the number of requirements, and m the
         number of characteristics.
         """
-        self.assertIsInstance(self.inst.correlation, np.matrix)
+        self.assertIsInstance(self.inst.correlation, np.ndarray)
+        self.assertEqual(self.inst.correlation.ndim, 2)
         self.assertEqual(self.inst.correlation.shape, self.inst.shape)
         self.assertTrue((self.inst.correlation==self.correlation).all())
 
@@ -113,7 +115,7 @@ class TestCODA(unittest.TestCase):
         coda matrix, so characterstic parameter values should reflect
         this to be unambiguous.
         """
-        self.assertIsInstance(self.inst.parameter_value, np.matrix)
+        self.assertIsInstance(self.inst.parameter_value, np.ndarray)
         self.assertEqual(self.inst.parameter_value.shape,
                          (1, self.inst.shape[1]))
         self.assertTrue((self.inst.parameter_value==self.values).all())
@@ -122,7 +124,6 @@ class TestCODA(unittest.TestCase):
         (np.array([2.0, 10, 2, 7.5, 0.3]), None),
         (np.array([[2.0, 10, 2, 7.5, 0.3]]), None),
         (np.array([[2.0, 10, 2, 7.5, 0.3]]).T, None),
-        (np.matrix([2.0, 10, 2, 7.5, 0.3]), None),
         ([2.0, 10, 2, 7.5, 0.3], None),
         (tuple([2.0, 10, 2, 7.5, 0.3]), None),
         (set([2.0, 10, 2, 7.5, 0.3]), ValueError),
@@ -169,18 +170,18 @@ class TestCODA(unittest.TestCase):
         """
         correlation, merit = mocks
 
-        a = np.matrix(np.random.rand(3,2))
-        correlation.return_value = merit.return_value = np.matrix(a)
+        a = np.random.rand(3,2)
+        correlation.return_value = merit.return_value = a
 
         # numerator
-        num = np.multiply(a, a).sum(axis=1)
+        num = np.multiply(a, a).sum(axis=1, keepdims=True)
 
         # denominator
-        den = a.sum(axis=1)
+        den = a.sum(axis=1, keepdims=True)
 
         expected = np.divide(num, den)
 
-        self.assertIsInstance(self.inst.satisfaction, np.matrix)
+        self.assertIsInstance(self.inst.satisfaction, np.ndarray)
         self.assertEqual(self.inst.satisfaction.shape, (3, 1))
         np.testing.assert_array_almost_equal(self.inst.satisfaction,
                                              expected)
@@ -200,7 +201,7 @@ class TestCODA(unittest.TestCase):
         coda matrix, so requirement weights should reflect this to be
         unambiguous.
         """
-        self.assertIsInstance(self.inst.weight, np.matrix)
+        self.assertIsInstance(self.inst.weight, np.ndarray)
         self.assertEqual(self.inst.weight.shape,
                          (self.inst.shape[0], 1))
         # Note we must transpose the weight column vector to compare
@@ -338,6 +339,96 @@ class TestCODA(unittest.TestCase):
             self.assertRaises(exception, inst.add_relationship,
                               rlkup, clkup, 'max', 1.0, 1.0)
 
+    @mock.patch.object(models.CODA, 'add_relationship')
+    @mock.patch.object(models.CODA, 'add_characteristic')
+    @mock.patch.object(models.CODA, 'add_requirement')
+    def test_read_excel(self, mock_add_requirement,
+                        mock_add_characteristic,
+                        mock_add_relationship):
+        """Constructor adds elements in turn from the parser.
+
+        The parser provides three methods:
+
+          - get_requirements
+          - get_characteristics
+          - get_relationships
+
+        These all return records defined within io.CODASheet.
+
+        The constructor calls these methods on the parser and uses the
+        results to feed arguments to the add_requirement,
+        add_characteristic and add_relationship methods on the CODA
+        class.
+
+        This unit test mocks the parser and ensures the known return
+        values for these get methods are passed to the add methods in
+        the correct fashion.
+        """
+        dummy_records = {
+            'requirements': [
+                io.CODASheet.ReqRecord('Requirement 1', 0.33),
+                io.CODASheet.ReqRecord('Requirement 2', 0.5),
+                io.CODASheet.ReqRecord('Requirement 3', 0.17),
+            ],
+            'characteristics': [
+                io.CODASheet.CDefRecord('Characteristic 1', 1, 5),
+                io.CODASheet.CDefRecord('Characteristic 2', 10, 20),
+            ],
+            'relationships': [
+                io.CODASheet.MinMaxRelRecord(
+                    'Requirement 1',
+                    'Characteristic 1',
+                    'min',
+                    '---', # TODO: Remove redundant information
+                    3
+                ),
+                io.CODASheet.OptRelRecord(
+                    'Requirement 2',
+                    'Characteristic 1',
+                    'opt',
+                    'ooo',
+                    13,
+                    1,
+                ),
+                io.CODASheet.MinMaxRelRecord(
+                    'Requirement 3',
+                    'Characteristic 2',
+                    'max',
+                    '+++',
+                    3
+                ),
+            ]
+        }
+
+        stub_parser = mock.MagicMock(spec_set=io.CompactExcelParser)
+        for s in 'requirements', 'characteristics', 'relationships':
+            method = getattr(stub_parser, 'get_{}'.format(s))
+            method.return_value = dummy_records[s]
+        mock_parser_class = mock.Mock()
+        mock_parser_class.return_value = stub_parser
+
+        sut = models.CODA.read_excel('/dummy/path',
+                                     parser_class=mock_parser_class)
+
+        mock_parser_class.assert_called_once_with('/dummy/path')
+        mock_add_requirement.assert_has_calls([
+            mock.call('Requirement 1', 0.33),
+            mock.call('Requirement 2', 0.5),
+            mock.call('Requirement 3', 0.17),
+        ])
+        mock_add_characteristic.assert_has_calls([
+            mock.call('Characteristic 1', (1, 5)),
+            mock.call('Characteristic 2', (10, 20)),
+        ])
+        mock_add_relationship.assert_has_calls([
+            mock.call('Requirement 1', 'Characteristic 1', 'min',
+                      '---', 3),
+            mock.call('Requirement 2', 'Characteristic 1', 'opt',
+                      'ooo', 13, 1),
+            mock.call('Requirement 3', 'Characteristic 2', 'max',
+                      '+++', 3),
+        ])
+
     def test__merit(self):
         """Returns a matrix of merit values for design relationships.
 
@@ -351,7 +442,8 @@ class TestCODA(unittest.TestCase):
         "Internal" method because raw merit values are not considered
         particularly useful on their own at this point.
         """
-        self.assertIsInstance(self.inst._merit(), np.matrix)
+        self.assertIsInstance(self.inst._merit(), np.ndarray)
+        self.assertEqual(self.inst._merit().ndim, 2)
         self.assertEqual(self.inst._merit().shape, self.inst.shape)
         self.assertTrue((self.inst._merit()==self.merit).all())
 
@@ -424,8 +516,8 @@ class TestCODACaseStudy1(unittest.TestCase):
     def test_sum_of_correlations(self):
         """Sum of correlation factors for all requirements."""
         np.testing.assert_array_almost_equal(
-            self.wheel.correlation.sum(axis=1),
-            np.matrix([2.4, 1.2, 3.0, 1.3, 1.3]).T
+            self.wheel.correlation.sum(axis=1, keepdims=True),
+            np.array([[2.4, 1.2, 3.0, 1.3, 1.3]]).T
         )
 
     def test_read_excel(self):
@@ -436,7 +528,7 @@ class TestCODACaseStudy1(unittest.TestCase):
             self.skipTest("`pandas` and `xlrd` required for "
                           "spreadsheet parsing")
         model = models.CODA.read_excel(
-            os.path.join(DATAD, 'demo_model_casestudy1.xlsx')
+            os.path.join(DATA_DIR, 'demo_model_casestudy1.xlsx')
         )
 
         for char, ref in zip(model.characteristics,

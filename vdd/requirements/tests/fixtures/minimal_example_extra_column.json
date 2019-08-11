@@ -1,0 +1,7 @@
+[
+	["Requirements", "Requirement 1", "Requirement 2", 
+	 "Requirement 3", "Requirement 4"],
+	["Requirement 1", "0", "0", "1", "1"],
+	["Requirement 2", "0", "0", "1", "1"],
+	["Requirement 3", "0", "0", "0", "1"]
+]

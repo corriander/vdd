@@ -1,0 +1,24 @@
+{
+	"requirements": [
+		"Easy to extend operational life",
+		"Green aircraft",
+		"Easy to operate",
+		"Cheap to maintain and repair",
+		"Lowest consumption per PAX-km",
+		"No A/C on ground",
+		"Unlimited use of Internet",
+		"Extremely comfortable",
+		"Sufficient range"
+	],
+	"binary_matrix": [
+		[0, 0, 1, 1, 0, 1, 1, 1, 0],
+		[0, 0, 0, 1, 1, 1, 1, 1, 0],
+		[0, 0, 0, 1, 1, 0, 1, 1, 0],
+		[0, 0, 0, 0, 1, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0, 1, 1, 1, 1],
+		[0, 0, 0, 0, 0, 0, 1, 0, 0],
+		[0, 0, 0, 0, 0, 0, 0, 1, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 1],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0]
+	]
+}

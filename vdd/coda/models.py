@@ -28,6 +28,78 @@ except NameError:
 
 class CODA(object):
 
+    @classmethod
+    def from_excel(cls, path, parser_class=io.CompactExcelParser):
+        """Construct a CODA model from an Excel workbook.
+
+        Parameters
+        ----------
+
+        path : str
+            Filesystem path to the Excel workbook
+
+        Returns
+        -------
+
+        CODA
+            Populated CODA model
+        """
+        return cls.read_excel(path, parser_class)
+
+    @classmethod
+    def from_google_sheet(cls, workbook_name):
+        """Construct a CODA model from a Google Sheet.
+
+        Parameters
+        ----------
+
+        workbook_name : str
+            Name of shared Google Sheet
+
+        Returns
+        -------
+
+        CODA
+            Populated CODA model
+
+        Notes
+        -----
+
+        The Google Sheet must be shared with a service account for
+        which credentials are provided in the configuration
+        directory.
+        """
+        sheet = cls._get_sheet(workbook_name)
+        model = cls()
+        return cls._transfer_elements(model, sheet)
+
+    @classmethod
+    def read_excel(cls, path, parser_class=io.CompactExcelParser):
+        """Import model from spreadsheet."""
+        parser = parser_class(path)
+        model = cls()
+        return cls._transfer_elements(model, parser)
+
+    @staticmethod
+    def _transfer_elements(inst, source):
+        # Helper method for the constructors.
+        for element in 'requirement','characteristic','relationship':
+            for args in getattr(source, 'get_{}s'.format(element))():
+                if element == 'characteristic':
+                    # add_characteristics has a bounds parameter, not
+                    # separate min, max params.
+                    args = (args[0],) + (args[1:3],)
+                getattr(inst, 'add_{}'.format(element))(*args)
+        return inst
+
+    @staticmethod
+    def _get_sheet(workbook_name):
+        # TODO: remove redundancy with BinWM
+        return io.GSheetCODA(workbook_name)
+
+    # ----------------------------------------------------------------
+    # Properties
+    # ----------------------------------------------------------------
     @property
     def matrix(self):
         """Matrix of relationship functions.
@@ -89,7 +161,7 @@ class CODA(object):
         """
         # XXX: It would be really nice if the mutability of this
         #	   propagated down.
-        return np.matrix([[c.value for c in self.characteristics]])
+        return np.array([[c.value for c in self.characteristics]])
     @parameter_value.setter
     def parameter_value(self, value):
         m = self.shape[1]
@@ -134,7 +206,9 @@ class CODA(object):
         cf = self.correlation
         scf = cf.sum(axis=1)
         mv = self._merit()
-        return np.divide(np.multiply(mv, cf).sum(axis=1), scf)
+        array = np.divide(np.multiply(mv, cf).sum(axis=1), scf)
+        vector = array[:,np.newaxis]
+        return vector
 
     @property
     def shape(self):
@@ -152,9 +226,12 @@ class CODA(object):
         Each requirement contributions to the overall model according
         to its weight.
         """
-        vec = np.matrix([[reqt.weight for reqt in self.requirements]])
+        vec = np.array([[reqt.weight for reqt in self.requirements]])
         return vec.T # Return as column vector
 
+    # ----------------------------------------------------------------
+    # Methods
+    # ----------------------------------------------------------------
     def add_requirement(self, name, weight, normalise=True):
         """Add a requirement to the model.
 
@@ -210,7 +287,10 @@ class CODA(object):
         """
         tup = self.characteristics
         if name in [c.name for c in tup]:
-            raise ValueError("Characteristic of this name exists.")
+            raise ValueError(
+                "A characteristic with name '{}' has already been "
+                "defined on this model.".format(name)
+            )
         obj = CODACharacteristic(name, limits, value, context=self)
         self._characteristics = tup + (obj,)
 
@@ -270,26 +350,12 @@ class CODA(object):
         """
         return self.matrix == other.matrix
 
-    @classmethod
-    def read_excel(cls, path, parser_class=io.CompactExcelParser):
-        """Import model from spreadsheet."""
-        parser = parser_class(path)
-        model = cls()
-        for element in 'requirement','characteristic','relationship':
-            for args in getattr(parser, 'get_{}s'.format(element))():
-                if element == 'characteristic':
-                    # FIXME: Hack
-                    args = (args[0],) + (args[1:3],)
-                getattr(model, 'add_{}'.format(element))(*args)
-
-        return model
-
     def _create_base_matrix(self):
         # Create an array sized by the shape of the coda model and
         # populate with Null relationships.
         array = np.empty(self.shape, dtype=object)
         array[:] = CODANull()
-        return np.matrix(array)
+        return array
 
     def _merit(self):
         vfunc = np.vectorize(lambda f, x: f(x))

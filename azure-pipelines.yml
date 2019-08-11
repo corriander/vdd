@@ -36,6 +36,6 @@ steps:
 
 - script: |
     source activate $CONDA_ENV
-    conda install -y -c conda-forge pytest pytest-azurepipelines
+    conda install -y -c conda-forge pytest=4.6 pytest-azurepipelines
     pytest
   displayName: Run tests in conda environment
