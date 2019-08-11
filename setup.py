@@ -6,28 +6,17 @@ References
     <https://packaging.python.org/en/latest/distributing.html>
     <https://github.com/pypa/sampleproject>
 """
-
+import os
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
-from os import path
 
 # Markdown README used for Github.
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
-    long_description = long_description.replace("\r", "")
-
-except OSError:
-    print("Pandoc not found; long_description conversion failure.")
-    # fallback to raw content
-    with open('README.md', encoding='utf-8') as f:
-        long_description = f.read()
-
-except (RuntimeError, ImportError):
-    # We're installing, don't bother.
-    long_description=''
+project_dir = os.path.abspath(os.path.dirname(__file__))
+readme_path = os.path.join(project_dir, 'README.md')
+with open(readme_path, encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='vdd',
@@ -35,15 +24,16 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.2.0',
+    version='0.3.0',
 
     description='Tools to assist value-driven design & decisions',
     long_description=long_description,
+    long_description_content_type='text/markdown',
 
     # The project's main homepage.
     url='https://github.com/corriander/vdd',
 
-    download_url='https://github.com/corriander/vdd/archive/v0.2.0.tar.gz',
+    download_url='https://github.com/corriander/vdd/archive/v0.3.0.tar.gz',
 
     # Author details
     author='Alex Corrie',
@@ -93,7 +83,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy'],
+    install_requires=['numpy', 'pandas', 'pygsheets'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

@@ -14,7 +14,8 @@ Features
 
   - Concept Design Analysis (CODA) method implementation
   - Requirements weighting with a Binary Weighting Matrix
-  - Programmatic or Excel-based models
+  - Programmatic or Spreadsheet based model creation (via Excel
+    workbooks or Google Sheets).
 
 Install
 -------
