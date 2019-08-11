@@ -8,4 +8,4 @@ References
 """
 from . import coda, requirements
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
