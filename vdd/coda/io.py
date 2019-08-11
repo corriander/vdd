@@ -246,8 +246,23 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
         try:
             return self._cached_df
         except AttributeError:
-            self._cached_df = self._facade.get_sheet_as_dataframe()
-            return self._cached_df
+            # Get the source data and construct a dataframe.
+            # Note we get the source data as raw as possible because
+            # we don't benefit hugely by relying on external process
+            # to generate the dataframe and it can cause issues with
+            # the very non-standard CODA sheet layout.
+            rows = self._facade.get_rows()
+            header = rows[0]
+            body = rows[1:]
+
+            try:
+                df = pd.DataFrame.from_records(body)
+                df.columns = header
+            except:
+                raise self.InvalidSource("Can't construct dataframe.")
+            else:
+                self._cached_df = df
+                return self._cached_df
 
     @property
     def characteristic_df(self):

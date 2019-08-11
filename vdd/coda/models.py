@@ -287,7 +287,10 @@ class CODA(object):
         """
         tup = self.characteristics
         if name in [c.name for c in tup]:
-            raise ValueError("Characteristic of this name exists.")
+            raise ValueError(
+                "A characteristic with name '{}' has already been "
+                "defined on this model.".format(name)
+            )
         obj = CODACharacteristic(name, limits, value, context=self)
         self._characteristics = tup + (obj,)
 

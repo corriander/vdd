@@ -71,12 +71,14 @@ class TestWorksheetAdapter(unittest.TestCase):
 
         mock_sheet.refresh.assert_called_once_with(update_grid=True)
 
-    def test_get_all_values(self):
-        """Method papers over some deficiencies in the original.
+    def test_get_all_values__binwm_source_structure(self):
+        """Method papers over some deficiencies in the wrapped method.
 
         Specifically, the original didn't provide enough control over
-        trimming blank columns. This wrapped version behaves more like
-        gspread's.
+        trimming blank columns. This wrapper strips trailing columns.
+
+        This test checks using source data typical of a binary
+        weighting matrix
         """
         self.mock_sheet.get_all_values.return_value = [
             ['Requirements',
@@ -102,6 +104,33 @@ class TestWorksheetAdapter(unittest.TestCase):
             ['Requirement 1', '', '', ''],
             ['Requirement 2', '', '', ''],
             ['Requirement 3', '', '', '']
+        ]
+
+        self.assertEqual(actual, expected)
+
+    def test_get_all_values__coda_source_structure(self):
+        """Method papers over some deficiencies in the wrapped method.
+
+        Specifically, the original didn't provide enough control over
+        trimming blank columns. This wrapper strips trailing columns.
+
+        This test checks using a source data structure typical of a
+        coda model.
+        """
+        self.mock_sheet.get_all_values.return_value = [
+                [  '', 'B1', 'C1',   '', 'E1',   '', ''],
+                ['A2', 'B2', 'C2', 'D2', 'E2', 'F2', ''],
+                ['A3', 'B3', 'C3',   '', 'E3', 'F3', ''],
+                ['A4', 'B4', 'C4', 'D4', 'E4',   '', ''],
+        ]
+
+        adapter = self.sut
+        actual = adapter.get_all_values()
+        expected = [
+            [  '', 'B1', 'C1',   '', 'E1',   ''],
+            ['A2', 'B2', 'C2', 'D2', 'E2', 'F2'],
+            ['A3', 'B3', 'C3',   '', 'E3', 'F3'],
+            ['A4', 'B4', 'C4', 'D4', 'E4',   ''],
         ]
 
         self.assertEqual(actual, expected)
