@@ -6,28 +6,17 @@ References
     <https://packaging.python.org/en/latest/distributing.html>
     <https://github.com/pypa/sampleproject>
 """
-
+import os
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
-from os import path
 
 # Markdown README used for Github.
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
-    long_description = long_description.replace("\r", "")
-
-except OSError:
-    print("Pandoc not found; long_description conversion failure.")
-    # fallback to raw content
-    with open('README.md', encoding='utf-8') as f:
-        long_description = f.read()
-
-except (RuntimeError, ImportError):
-    # We're installing, don't bother.
-    long_description=''
+project_dir = os.path.abspath(os.path.dirname(__file__))
+readme_path = os.path.join(project_dir, 'README.md')
+with open(readme_path, encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='vdd',
@@ -39,6 +28,7 @@ setup(
 
     description='Tools to assist value-driven design & decisions',
     long_description=long_description,
+    long_description_content_type='text/markdown',
 
     # The project's main homepage.
     url='https://github.com/corriander/vdd',
