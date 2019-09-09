@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import abc
 import os
 
+import appdirs
 import pygsheets
-import xdg
 
 from .abstract import ABC
 
@@ -29,11 +29,10 @@ class AbstractGSheet(ABC):
 
 
 class GSheetsFacade(object):
-    """Facade providing restrictred API to Google Sheets."""
+    """Facade providing restricted API to Google Sheets."""
 
     _credentials_path = os.path.join(
-        xdg.XDG_CONFIG_HOME,
-        'vdd',
+        appdirs.user_config_dir('vdd'),
         'gsheets_credentials.json'
     )
 
