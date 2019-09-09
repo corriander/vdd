@@ -8,7 +8,7 @@ dependencies:
   - mock=3.0.*
   - numpy=1.16.*
   - pandas=0.24.*
-  - xdg=1.0.5
+  - appdirs
   - xlrd=1.2.*
   - pip:
       - pygsheets==2.0.2
