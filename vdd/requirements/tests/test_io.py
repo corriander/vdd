@@ -1,8 +1,8 @@
 import json
 import os
 import unittest
+from unittest import mock
 
-import mock
 import numpy as np
 import pandas as pd
 import pygsheets

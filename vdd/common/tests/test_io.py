@@ -1,6 +1,6 @@
 import unittest
+from unittest import mock
 
-import mock
 import pygsheets
 import pandas as pd
 

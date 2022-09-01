@@ -1,8 +1,8 @@
 import unittest
 import os
 import sys
+from unittest import mock
 
-import mock
 import numpy as np
 try:
     import pandas as pd
