@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import abc
 import os
 
-import appdirs
+import platformdirs
 import pygsheets
 
 from .abstract import ABC
@@ -32,7 +32,7 @@ class GSheetsFacade(object):
     """Facade providing restricted API to Google Sheets."""
 
     _credentials_path = os.path.join(
-        appdirs.user_config_dir('vdd'),
+        platformdirs.user_config_dir('vdd'),
         'gsheets_credentials.json'
     )
 
