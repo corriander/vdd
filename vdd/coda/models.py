@@ -9,21 +9,13 @@ References
     Characteristics: An Aerospace Perspective for Conceptual Design -
     Journal of Engineering Design pp. 1-24
 """
-from __future__ import division
-
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 import abc
-import collections
+from collections.abc import Sequence
 
 import numpy as np
 
 from . import io
-
-try:
-    input = raw_input
-except NameError:
-    # Python 3; all OK
-    pass
 
 
 class CODA(object):
@@ -173,7 +165,7 @@ class CODA(object):
             value = value.tolist()[0]
 
         if (len(value) == m and
-            isinstance(value, (collections.Sequence, np.ndarray))):
+            isinstance(value, (Sequence, np.ndarray))):
             try:
                 for x, c in zip(value, self.characteristics):
                     c.value = x

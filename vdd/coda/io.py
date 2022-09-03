@@ -348,7 +348,7 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
             cols = df.iloc[:,col_idxs]
             cols = cols.replace('', np.nan)
             cols = cols.astype(float)
-            df.iloc[:,col_idxs] = cols
+            df.at[:,col_idxs] = cols
 
         return df
 

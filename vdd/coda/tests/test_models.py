@@ -1,12 +1,8 @@
 import os
 import unittest
+from unittest import mock
 
 import numpy as np
-
-try:
-    import mock
-except ModuleNotFoundError:
-    from unittest import mock
 
 from ddt import data, unpack, ddt
 
