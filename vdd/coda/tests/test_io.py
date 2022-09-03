@@ -70,8 +70,8 @@ class TestExcelParser(unittest.TestCase):
 
         # Check the dummpy which contains NaNs.
         self.assertEqual(retval[2][0], 'Dummy Characteristic')
-        self.assertTrue(pd.np.isnan(retval[2][1]))
-        self.assertTrue(pd.np.isnan(retval[2][2]))
+        self.assertTrue(np.isnan(retval[2][1]))
+        self.assertTrue(np.isnan(retval[2][2]))
 
     def test_get_relationships(self):
         """Three relationships are defined in the source spreadsheet.
@@ -216,8 +216,8 @@ class TestGSheetCODA(unittest.TestCase):
         expected = self.compact_excel_parser.get_relationships()
 
         np.testing.assert_array_equal(
-            np.array(actual),
-            np.array(expected)
+            np.array(actual, dtype=object),
+            np.array(expected, dtype=object)
         )
 
     def test_is_valid(self, mock_df_property):
