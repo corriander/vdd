@@ -25,6 +25,11 @@ steps:
     versionSpec: '$(python.version)'
   displayName: 'Use Python $(python.version)'
 
+- bash: |
+    curl -sSL https://install.python-poetry.org | python3 - --preview
+    poetry --version || { echo "Failed to get poetry version" && exit 1; }
+  displayName: "poetry: Install"
+
 - script: |
     poetry run pytest vdd --junitxml=junit/test-results.xml --cov=vdd --cov-report=xml --cov-report=html
   displayName: "poetry: run tests"
