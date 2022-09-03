@@ -26,8 +26,6 @@ steps:
   displayName: 'Use Python $(python.version)'
 
 - script: |
-    source activate $CONDA_ENV
-    conda install -y -c conda-forge pytest=4.6 pytest-azurepipelines pytest-cov
     poetry run pytest vdd --junitxml=junit/test-results.xml --cov=vdd --cov-report=xml --cov-report=html
   displayName: "poetry: run tests"
 
