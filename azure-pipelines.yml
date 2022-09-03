@@ -28,7 +28,11 @@ steps:
 - bash: |
     curl -sSL https://install.python-poetry.org | python3 - --preview
     poetry --version || { echo "Failed to get poetry version" && exit 1; }
-  displayName: "poetry: Install"
+  displayName: "poetry: install"
+
+- bash: |
+    poetry install -v --with azp || { echo "##vso[task.logissue type=error]Error: poetry install" && exit 1 ; }
+  displayName: "poetry: install package"
 
 - script: |
     poetry run pytest vdd --junitxml=junit/test-results.xml --cov=vdd --cov-report=xml --cov-report=html
