@@ -9,6 +9,7 @@ design process. The intent is to keep this as generic as possible, as
 some of this decision modelling is suited to generic decision-making,
 non-design activities with a little massaging.
 
+
 Features
 -------
 
@@ -17,10 +18,12 @@ Features
   - Programmatic or Spreadsheet based model creation (via Excel
     workbooks or Google Sheets).
 
+
 Install
 -------
 
-	pip install vdd
+    pip install vdd
+
 
 Documentation
 -------
@@ -29,6 +32,19 @@ Currently just stored in the repo.
 
   - [Using Google Sheets for requirements matrices][binwm-gsheets]
   - tbc
+
+
+Development
+-----------
+
+`poetry` must be installed in the local development environment as a pre-requisite. In the repository root:
+
+
+	poetry install
+
+### Versioning
+
+Simple versioning approach: set the version in `pyproject.toml` and let poetry handle it.
 
 Roadmap
 -------
@@ -41,6 +57,7 @@ Roadmap
   - Export CODA models to Excel template
   - House of Quality style requirement/characteristic weighting
   - Pandas everywhere (v1.x)
+
 
 References
 ----------

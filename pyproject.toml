@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vdd"
-version = "0.3.3rc1"
+version = "1.0.0rc1"
 description = "Tools for Value-Driven Design"
 authors = ["Alex Corrie <ajccode@gmail.com>"]
 license = "MIT"
