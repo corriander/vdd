@@ -42,9 +42,11 @@ Development
 
 	poetry install
 
+
 ### Versioning
 
 Simple versioning approach: set the version in `pyproject.toml` and let poetry handle it.
+
 
 Roadmap
 -------
