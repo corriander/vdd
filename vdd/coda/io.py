@@ -62,7 +62,9 @@ class CODASheet(common.ABC):
 class ExcelParser(CODASheet):
 
     # 20 characteristic definitions are supported ((4*26)/5 cols)
-    _MAX_COL = 'CZ'
+    # Characteristic definitions span 4 columns from col C, over 2 rows
+    _MIN_CHAR_COL = 2  # C
+    _MAX_CHAR_ROW = 1  # 2
     _NCOLS_CHAR = 4
 
     def __init__(self, path):
@@ -86,10 +88,7 @@ class ExcelParser(CODASheet):
         try:
             return self._cdf
         except AttributeError:
-            df = pd.read_excel(
-                self.path,
-                usecols="C:{}".format(self._MAX_COL)
-            )[:1]
+            df = pd.read_excel(self.path).iloc[:self._MAX_CHAR_ROW, self._MIN_CHAR_COL:]
 
         return self._cdf_base(df)
 
@@ -177,6 +176,7 @@ class ExcelParser(CODASheet):
 
 class CompactExcelParser(ExcelParser):
 
+    # Each characteristic spans 3 columns in the compact format
     _NCOLS_CHAR = 3
 
     def _cdf_base(self, df):
