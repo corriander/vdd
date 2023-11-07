@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/corriander/vdd/compare/v2.0.0...v2.0.1) (2023-11-07)
+
+
+### Bug Fixes
+
+* remove poetry dependency ([2721f8c](https://github.com/corriander/vdd/commit/2721f8c5e34dd2ec624e0705d9e15594c8dcbb7d))
+
 ## [2.0.0](https://github.com/corriander/vdd/compare/v1.1.1...v2.0.0) (2023-11-07)
 
 
