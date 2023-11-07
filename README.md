@@ -1,7 +1,12 @@
 Tools for Value-Driven Design
 =============================
 
-[![Build Status][master-build-status]][azure-pipeline]
+<!-- badges -->
+
+[![cc-angular][cc-angular-badge]][cc-home]
+[![release-tool][release-please-badge]][release-please-gh]
+
+<!-- / -->
 
 
 Tools intended to help with modelling decisions in a value centric
@@ -43,15 +48,15 @@ Development
 	poetry install
 
 
-### Versioning
+### Releases
 
-Simple versioning approach: set the version in `pyproject.toml` and let poetry handle it.
+Managed by [Release Please][release-please-gh] with auto-versioning.
+Changes to default branch will be accumulated in a release PR based on [Conventional Commits][cc-home].
+Merging the release PR will automatically publish the versioned package to PyPI.
 
 
 Roadmap
 -------
-
-![Azure DevOps builds (branch)][develop-build-status]
 
   - Model sets for comparative work (rather than a single set of
 	characteristic parameter values)
@@ -71,8 +76,14 @@ Based on my own degree notes and open access literature:
 	Journal of Engineering Design pp. 1-24
 	<http://eprints.soton.ac.uk/id/eprint/361442>
 
-<!-- statuses -->
-[azure-pipeline]: https://dev.azure.com/corriander/github-public/_build/latest?definitionId=2&branchName=master
-[master-build-status]: https://dev.azure.com/corriander/github-public/_apis/build/status/corriander.vdd?branchName=master
-[develop-build-status]: https://img.shields.io/azure-devops/build/corriander/8c97c580-4bf1-4e14-80b2-1be44ecc86f6/2/develop?label=develop
+
+
+
+<!-- links -->
+
+[cc-angular-badge]: https://img.shields.io/badge/conventional_commits-angular-FE5196?logo=conventionalcommits&
+[cc-home]: https://www.conventionalcommits.org
+[release-please-badge]: https://img.shields.io/badge/release--please-python-4285F4?logo=google
+[release-please-gh]: https://github.com/googleapis/release-please
+
 [binwm-gsheets]: ./docs/gsheets-integration.md
