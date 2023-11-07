@@ -66,6 +66,7 @@ jobs:
         with:
           python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
           poetry-version: ${{ env.DEFAULT_POETRY_VERSION }}
+          release-tag: ${{ steps.release.outputs.tag_name }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           pypi-token: ${{ secrets.PYPI_TOKEN }}
           dynamic-versioning: false
