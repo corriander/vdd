@@ -1552,7 +1552,7 @@ dependencies = [
     { name = "xlrd" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "coverage", version = "7.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "coverage", version = "7.10.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
@@ -1567,20 +1567,23 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coverage", marker = "extra == 'dev'", specifier = ">=7" },
-    { name = "ddt", marker = "extra == 'dev'", specifier = ">=1.6.0,<2" },
     { name = "numpy", specifier = ">=1.21.1" },
     { name = "openpyxl", specifier = ">=3.0.10,<4" },
     { name = "pandas", specifier = ">=1.3.5" },
     { name = "platformdirs", specifier = ">=2.6.2" },
     { name = "pygsheets", specifier = ">=2.0.5,<3" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.1.2,<8" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.8.2,<4" },
     { name = "pytz", specifier = ">=2022.6" },
     { name = "xlrd", specifier = ">=2.0,<3" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7" },
+    { name = "ddt", specifier = ">=1.6.0,<2" },
+    { name = "pytest", specifier = ">=7.1.2,<8" },
+    { name = "pytest-cov", specifier = ">=4" },
+    { name = "pytest-mock", specifier = ">=3.8.2,<4" },
+]
 
 [[package]]
 name = "xlrd"
