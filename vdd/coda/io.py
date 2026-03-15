@@ -344,11 +344,9 @@ class GSheetCODA(common.io.AbstractGSheet, CompactExcelParser):
 
         # Convert the column datatypes
         for header in 'Target Value', 'Tolerance':
-            col_idxs = df.columns.get_level_values(1)==header
-            cols = df.iloc[:,col_idxs]
-            cols = cols.replace('', np.nan)
-            cols = cols.astype(float)
-            df.loc[:,col_idxs] = cols
+            col_idxs = df.columns.get_level_values(1) == header
+            for col in df.columns[col_idxs]:
+                df[col] = pd.to_numeric(df[col].replace('', np.nan))
 
         return df
 
