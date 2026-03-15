@@ -14,8 +14,6 @@ permissions:
 
 env:
   DEFAULT_PYTHON_VERSION: '3.11'
-  DEFAULT_POETRY_VERSION: '1.6.0'
-
 
 
 jobs:
@@ -39,10 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: corriander/gha/poetry/test@main
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version == 'default' && env.DEFAULT_PYTHON_VERSION || matrix.python-version }}
-          poetry-version: ${{ env.DEFAULT_POETRY_VERSION }}
+
+      - uses: corriander/gha/uv/test@main
 
   release:
     name: 🚀 Release
@@ -61,12 +60,24 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - uses: corriander/gha/poetry/publish@main
+      - uses: astral-sh/setup-uv@v7
+        if: steps.release.outputs.release_created
+
+      - name: Build
+        if: steps.release.outputs.release_created
+        run: uv build
+
+      - uses: svenstaro/upload-release-action@v2
         if: steps.release.outputs.release_created
         with:
-          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
-          poetry-version: ${{ env.DEFAULT_POETRY_VERSION }}
-          release-tag: ${{ steps.release.outputs.tag_name }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pypi-token: ${{ secrets.PYPI_TOKEN }}
-          dynamic-versioning: false
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/*
+          tag: ${{ steps.release.outputs.tag_name }}
+          file_glob: true
+          make_latest: false
+
+      - name: Publish to PyPI
+        if: steps.release.outputs.release_created
+        run: uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
