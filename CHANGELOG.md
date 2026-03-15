@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.0.0](https://github.com/corriander/vdd/compare/v2.0.2...v3.0.0) (2026-03-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* add a simple cli, drop legacy python support  ([#17](https://github.com/corriander/vdd/issues/17))
+* comes with dropping python 3.8-3.10 support
+* **deps:** 3.11+ required
+
+### Features
+
+* add a simple cli ([1e41e9e](https://github.com/corriander/vdd/commit/1e41e9ee1ea07c44459e8b028f0285b4f6ace0f2))
+* add a simple cli, drop legacy python support  ([#17](https://github.com/corriander/vdd/issues/17)) ([aee3e81](https://github.com/corriander/vdd/commit/aee3e81f0ee1a81c9dec1c4a413351581274f73f))
+
+
+### Build System
+
+* **deps:** drop &lt;3.11, add 3.12, 3.13; bump pandas/numpy ([1500153](https://github.com/corriander/vdd/commit/1500153db81f7b0a1c1dc751e80a6c4d87435c8d))
+
 ## [2.0.2](https://github.com/corriander/vdd/compare/v2.0.1...v2.0.2) (2026-03-15)
 
 
