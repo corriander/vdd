@@ -1,11 +1,9 @@
 import json
 import os
-import unittest
-from unittest import mock
 
 import numpy as np
 import pandas as pd
-from ddt import ddt, unpack, data
+import pytest
 
 from .. import io
 from .. import models
@@ -13,16 +11,14 @@ from .. import models
 from . import FIXTURES_DIR
 
 
-class TestCase(unittest.TestCase):
+def get_fixture_data(fname):
+    """Load a JSON fixture file and return its parsed contents."""
+    path = os.path.join(FIXTURES_DIR, fname)
+    with open(path) as f:
+        return json.load(f)
 
-    def get_fixture_data(self, fname):
-        path = os.path.join(FIXTURES_DIR, fname)
-        with open(path) as f:
-            return json.load(f)
 
-
-@ddt
-class TestBinWM(TestCase):
+class TestBinWM:
 
     model_data_fixtures = {
         'Minimal Example': 'case__minimal_example.json',
@@ -32,7 +28,7 @@ class TestBinWM(TestCase):
 
     def setup_binary_weighting_matrix(self, key):
         fixture_fname = self.model_data_fixtures[key]
-        data = self.get_fixture_data(fixture_fname)
+        data = get_fixture_data(fixture_fname)
         bwm = models.BinWM(*data['requirements'])
         bwm._matrix = np.array(data['binary_matrix'])
         bwm.label = "My Requirements"
@@ -43,7 +39,7 @@ class TestBinWM(TestCase):
 
         np.testing.assert_allclose(
             bwm.score,
-            np.array([0.095, 0.286, 0.143,  0.143, 0.143, 0.19]),
+            np.array([0.095, 0.286, 0.143, 0.143, 0.143, 0.19]),
             atol=0.01
         )
 
@@ -56,37 +52,36 @@ class TestBinWM(TestCase):
             atol=0.1
         )
 
-    @data(
+    @pytest.mark.parametrize("answers, score", [
         [('n', 'n', 'n'), (0.17, 0.33, 0.5)],
         [('y', 'n', 'n'), (0.33, 0.17, 0.5)],
         [('n', 'y', 'n'), (0.33, 0.33, 0.33)],
         [('n', 'y', 'y'), (0.33, 0.5, 0.17)],
         [('y', 'y', 'y'), (0.5, 0.33, 0.17)]
-    )
-    @unpack
-    @mock.patch.object(models.BinWM, '_print')
-    @mock.patch.object(models.BinWM, '_input')
-    def test_prompt(self, answers, score, mock_input, mock_print):
+    ])
+    def test_prompt(self, answers, score, mocker):
+        mock_input = mocker.patch.object(models.BinWM, '_input')
+        mocker.patch.object(models.BinWM, '_print')
         mock_input.side_effect = answers
         bwm = self.setup_binary_weighting_matrix('Minimal Example')
 
         bwm.prompt(shuffle=False)
 
         mock_input.assert_has_calls([
-            mock.call("'Requirement 1' is more important than "
-                      "'Requirement 2': "),
-            mock.call("'Requirement 1' is more important than "
-                      "'Requirement 3': "),
-            mock.call("'Requirement 2' is more important than "
-                      "'Requirement 3': ")
+            mocker.call("'Requirement 1' is more important than "
+                        "'Requirement 2': "),
+            mocker.call("'Requirement 1' is more important than "
+                        "'Requirement 3': "),
+            mocker.call("'Requirement 2' is more important than "
+                        "'Requirement 3': ")
         ])
 
         np.testing.assert_allclose(bwm.score, np.array(score), atol=0.01)
 
-    @mock.patch('random.shuffle')
-    @mock.patch.object(models.BinWM, '_print')
-    @mock.patch.object(models.BinWM, '_input')
-    def test_prompt__shuffle(self, mock_input, mock_print, mock_shuffle):
+    def test_prompt__shuffle(self, mocker):
+        mock_input = mocker.patch.object(models.BinWM, '_input')
+        mocker.patch.object(models.BinWM, '_print')
+        mock_shuffle = mocker.patch('random.shuffle')
         mock_input.side_effect = ['y'] * 3
         bwm = self.setup_binary_weighting_matrix('Minimal Example')
 
@@ -113,7 +108,6 @@ class TestBinWM(TestCase):
             'Requirement ' + str(x) for x in range(1, 4)
         ]
 
-
         expected = pd.DataFrame(
             data=[
                 [0, 0, 1, expected_scores[0]],
@@ -125,92 +119,68 @@ class TestBinWM(TestCase):
         )
         expected.index.name = 'My Requirements'
 
-        try:
-            pd.testing.assert_frame_equal(actual, expected)
-        except AssertionError:
-            # Ugh. mix of unicode and str causing a comparison failure
-            # in Python 2. Don't actually care about this so this is a
-            # little trap to check that's what's happening and let it
-            # go.
-            # TODO: remove >= January 2020
-            if not (actual.columns == expected.columns).all():
-                raise
-            else:
-                pass
-
+        pd.testing.assert_frame_equal(actual, expected)
 
     def test_save(self):
         """Method is only implemented in special cases."""
         bwm = self.setup_binary_weighting_matrix('Minimal Example')
         bwm._matrix[2, 0] = 1
-        self.assertRaises(NotImplementedError, bwm.save)
+        with pytest.raises(NotImplementedError):
+            bwm.save()
 
 
-@mock.patch.object(models.BinWM, '_get_sheet')
-class TestBinWM_GoogleSheetsIntegration(TestCase):
+class TestBinWM_GoogleSheetsIntegration:
 
-    def setup_mock_sheet(self, mock_getter):
-        # Get reference data
-        data = self.get_fixture_data('case__minimal_example.json')
+    @pytest.fixture(autouse=True)
+    def setup(self, mocker):
+        """Patch _get_sheet and configure a mock sheet from fixture data."""
+        self.mock_getter = mocker.patch.object(models.BinWM, '_get_sheet')
+        self._setup_mock_sheet(mocker)
+
+    def _setup_mock_sheet(self, mocker):
+        data = get_fixture_data('case__minimal_example.json')
         requirements = data['requirements']
         binary_matrix = np.array(data['binary_matrix'])
 
-        # Set up mock
-        mock_sheet = mock.MagicMock(spec_set=io.GSheetBinWM)
-        mock_getter.return_value = mock_sheet
+        mock_sheet = mocker.MagicMock(spec_set=io.GSheetBinWM)
+        self.mock_getter.return_value = mock_sheet
         mock_sheet.get_requirements.return_value = requirements
         mock_sheet.get_value_matrix.return_value = binary_matrix
+        self.mock_sheet = mock_sheet
 
-        return mock_sheet
-
-    def test_from_google_sheet(self, mock_getter):
+    def test_from_google_sheet(self):
         """Constructor uses and links a google sheet to instantiate.
 
         Requirements and binary matrix are fetched from the
         io.BinWMSheet interface to populate the object.
         """
-        mock_sheet = self.setup_mock_sheet(mock_getter)
-
         bwm = models.BinWM.from_google_sheet('dummy name')
 
         actual_requirements = bwm.requirements
-        expected_requirements = tuple(mock_sheet.get_requirements())
-        self.assertEqual(actual_requirements, expected_requirements)
+        expected_requirements = tuple(self.mock_sheet.get_requirements())
+        assert actual_requirements == expected_requirements
 
         actual_matrix = bwm.matrix
-        expected_matrix = mock_sheet.get_value_matrix()
+        expected_matrix = self.mock_sheet.get_value_matrix()
         np.testing.assert_allclose(actual_matrix, expected_matrix)
 
-    def test_access_sheet_model(self, mock_getter):
-        """Instances access linked sheets through a generic interface.
-        """
-        mock_sheet = self.setup_mock_sheet(mock_getter)
-
+    def test_access_sheet_model(self):
+        """Instances access linked sheets through a generic interface."""
         bwm = models.BinWM.from_google_sheet('dummy name')
 
-        actual = bwm._sheet
-        expected = mock_sheet
-        self.assertIs(actual, expected)
+        assert bwm._sheet is self.mock_sheet
 
-    @mock.patch.object(models.BinWM, 'to_dataframe')
-    def test_save__triggers_update(self, mock_to_dataframe,
-                                   mock_getter):
+    def test_save__triggers_update(self, mocker):
         """Save method wraps the google sheet update method."""
-        mock_sheet = self.setup_mock_sheet(mock_getter)
-
+        mock_to_dataframe = mocker.patch.object(models.BinWM, 'to_dataframe')
         mock_to_dataframe.return_value = blank_df = pd.DataFrame()
 
         bwm = models.BinWM.from_google_sheet('dummy name')
         bwm.save()
 
-        mock_sheet.update.assert_called_once_with(blank_df)
+        self.mock_sheet.update.assert_called_once_with(blank_df)
 
 
-class TestBinWM_ExcelIntegration(unittest.TestCase):
-    # TODO: BinWM is not current integrated with Excel
+class TestBinWM_ExcelIntegration:
+    # TODO: BinWM is not currently integrated with Excel
     pass
-
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,26 +1,23 @@
 import os
-import unittest
-from unittest import mock
 
 import numpy as np
-
-from ddt import data, unpack, ddt
+import pytest
 
 from .. import models
 from .. import io
 from . import DATA_DIR
 
 
-@ddt
-class TestCODA(unittest.TestCase):
+class TestCODA:
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, mocker):
         self.inst = inst = models.CODA()
 
         characteristics = []
         self.values = values = 1, 10, 2, 7.5, 0.3
         for x in values:
-            char = mock.Mock()
+            char = mocker.Mock()
             char.value = x
             characteristics.append(char)
 
@@ -29,7 +26,7 @@ class TestCODA(unittest.TestCase):
         requirements = []
         self.weights = weights = 0.2, 0.1, 0.4, 0.3
         for wt in weights:
-            reqt = mock.Mock()
+            reqt = mocker.Mock()
             reqt.weight = wt
             requirements.append(reqt)
 
@@ -52,71 +49,69 @@ class TestCODA(unittest.TestCase):
             def __call__(self, x):
                 return self._merit_preset
 
-        for	i in range(correlation.shape[0]):
+        for i in range(correlation.shape[0]):
             for j in range(correlation.shape[1]):
                 relationship = MockRelationship()
-                relationship.correlation = correlation[i,j]
-                relationship._merit_preset = self.merit[i,j]
-                inst.matrix[i,j] = relationship
+                relationship.correlation = correlation[i, j]
+                relationship._merit_preset = self.merit[i, j]
+                inst.matrix[i, j] = relationship
 
     # ----------------------------------------------------------------
     # Test properties
     # ----------------------------------------------------------------
     def test_matrix__unset(self):
-        """Matrix should match shape and contain CODANull by default.
-        """
+        """Matrix should match shape and contain CODANull by default."""
         temp_inst = models.CODA()
-        self.assertEqual(temp_inst.matrix.shape, (0, 0))
-
-        self.assertEqual(self.inst.matrix.shape, (4, 5))
+        assert temp_inst.matrix.shape == (0, 0)
+        assert self.inst.matrix.shape == (4, 5)
 
         temp_inst._requirements += (object(),)
-        self.assertEqual(temp_inst.matrix.shape, (1, 0))
+        assert temp_inst.matrix.shape == (1, 0)
 
         for i, j in zip(*map(range, temp_inst.matrix.shape)):
-            self.assertIsInstance(temp_inst.matrix[i,j], models.CODANull)
+            assert isinstance(temp_inst.matrix[i, j], models.CODANull)
 
     def test_characteristics__default(self):
         """Should be an empty tuple by default."""
         temp_inst = models.CODA()
-        self.assertIsInstance(temp_inst.characteristics, tuple)
-        self.assertEqual(len(temp_inst.characteristics), 0.0)
-        self.assertEqual(len(self.inst.requirements), 4)
+        assert isinstance(temp_inst.characteristics, tuple)
+        assert len(temp_inst.characteristics) == 0
+        assert len(self.inst.requirements) == 4
 
     def test_correlation(self):
         """Property converts correlation values in array to a matrix.
 
         Each design relationship models a correlation between a
-        requirement and a characteristic parameter. This  should
+        requirement and a characteristic parameter. This should
         therefore be the same dimensions as the overall coda model,
         i.e. (n, m) where n is the number of requirements, and m the
         number of characteristics.
         """
-        self.assertIsInstance(self.inst.correlation, np.ndarray)
-        self.assertEqual(self.inst.correlation.ndim, 2)
-        self.assertEqual(self.inst.correlation.shape, self.inst.shape)
-        self.assertTrue((self.inst.correlation==self.correlation).all())
+        assert isinstance(self.inst.correlation, np.ndarray)
+        assert self.inst.correlation.ndim == 2
+        assert self.inst.correlation.shape == self.inst.shape
+        assert (self.inst.correlation == self.correlation).all()
 
-    @mock.patch.object(models.CODA, 'satisfaction',
-                       new_callable=mock.PropertyMock)
-    def test_merit(self, patch):
+    def test_merit(self, mocker):
         """Sum total of weighted requirement satisfaction."""
+        patch = mocker.patch.object(
+            models.CODA, 'satisfaction', new_callable=mocker.PropertyMock
+        )
         patch.return_value = np.arange(5)
-        self.assertAlmostEqual(self.inst.merit, 10)
+        assert self.inst.merit == pytest.approx(10)
 
     def test_parameter_value(self):
         """A row vector containing characteristic parameter values.
 
         Characteristics are considered to be columns in the underlying
-        coda matrix, so characterstic parameter values should reflect
+        coda matrix, so characteristic parameter values should reflect
         this to be unambiguous.
         """
-        self.assertIsInstance(self.inst.parameter_value, np.ndarray)
-        self.assertEqual(self.inst.parameter_value.shape,
-                         (1, self.inst.shape[1]))
-        self.assertTrue((self.inst.parameter_value==self.values).all())
+        assert isinstance(self.inst.parameter_value, np.ndarray)
+        assert self.inst.parameter_value.shape == (1, self.inst.shape[1])
+        assert (self.inst.parameter_value == self.values).all()
 
-    @data(
+    @pytest.mark.parametrize("value, exception", [
         (np.array([2.0, 10, 2, 7.5, 0.3]), None),
         (np.array([[2.0, 10, 2, 7.5, 0.3]]), None),
         (np.array([[2.0, 10, 2, 7.5, 0.3]]).T, None),
@@ -124,35 +119,32 @@ class TestCODA(unittest.TestCase):
         (tuple([2.0, 10, 2, 7.5, 0.3]), None),
         (set([2.0, 10, 2, 7.5, 0.3]), ValueError),
         ([2.0, 10, 2, 7.5], ValueError),
-    )
-    @unpack
+    ])
     def test_parameter_value__set(self, value, exception):
-        self.assertEqual(self.inst.parameter_value[0,0], 1.0)
+        assert self.inst.parameter_value[0, 0] == 1.0
         if exception is not None:
-            self.assertRaises(exception, setattr, self.inst,
-                              'parameter_value', value)
+            with pytest.raises(exception):
+                setattr(self.inst, 'parameter_value', value)
         else:
             setattr(self.inst, 'parameter_value', value)
-            self.assertEqual(self.inst.parameter_value[0,0], 2.0)
+            assert self.inst.parameter_value[0, 0] == 2.0
 
     def test_requirements__default(self):
         """Should be an empty tuple by default."""
         temp_inst = models.CODA()
-        self.assertIsInstance(temp_inst.characteristics, tuple)
-        self.assertEqual(len(temp_inst.characteristics), 0.0)
-        self.assertEqual(len(self.inst.requirements), 4)
+        assert isinstance(temp_inst.characteristics, tuple)
+        assert len(temp_inst.characteristics) == 0
+        assert len(self.inst.requirements) == 4
 
-    @mock.patch.object(models.CODA, '_merit')
-    @mock.patch.object(models.CODA, 'correlation',
-                       new_callable=mock.PropertyMock)
-    def test_satisfaction(self, *mocks):
+    def test_satisfaction(self, mocker):
         """Weighted requirement satisfactions.
 
         This is the merit of each characteristic parameter value for
         each requirement, weighted by correlation factors.
 
-        .. math:
-            \frac{\sum_{j=1}^{M} cf .* \eta}{{scf}_i}
+        .. math::
+
+            \\frac{\\sum_{j=1}^{M} cf .* \\eta}{{scf}_i}
 
         Where
 
@@ -164,10 +156,13 @@ class TestCODA(unittest.TestCase):
             n = number of requirements
             m = number of characteristics
         """
-        correlation, merit = mocks
+        mock_merit = mocker.patch.object(models.CODA, '_merit')
+        mock_correlation = mocker.patch.object(
+            models.CODA, 'correlation', new_callable=mocker.PropertyMock
+        )
 
-        a = np.random.rand(3,2)
-        correlation.return_value = merit.return_value = a
+        a = np.random.rand(3, 2)
+        mock_correlation.return_value = mock_merit.return_value = a
 
         # numerator
         num = np.multiply(a, a).sum(axis=1, keepdims=True)
@@ -177,10 +172,9 @@ class TestCODA(unittest.TestCase):
 
         expected = np.divide(num, den)
 
-        self.assertIsInstance(self.inst.satisfaction, np.ndarray)
-        self.assertEqual(self.inst.satisfaction.shape, (3, 1))
-        np.testing.assert_array_almost_equal(self.inst.satisfaction,
-                                             expected)
+        assert isinstance(self.inst.satisfaction, np.ndarray)
+        assert self.inst.satisfaction.shape == (3, 1)
+        np.testing.assert_array_almost_equal(self.inst.satisfaction, expected)
 
     def test_shape(self):
         """Reflects the number of characteristics & requirements.
@@ -188,7 +182,7 @@ class TestCODA(unittest.TestCase):
         A CODA model involves n requirements and m characteristics,
         modelled as an (n, m) array/matrix.
         """
-        self.assertEqual(self.inst.shape, (4, 5))
+        assert self.inst.shape == (4, 5)
 
     def test_weight(self):
         """A column vector containing requirement weightings.
@@ -197,18 +191,17 @@ class TestCODA(unittest.TestCase):
         coda matrix, so requirement weights should reflect this to be
         unambiguous.
         """
-        self.assertIsInstance(self.inst.weight, np.ndarray)
-        self.assertEqual(self.inst.weight.shape,
-                         (self.inst.shape[0], 1))
+        assert isinstance(self.inst.weight, np.ndarray)
+        assert self.inst.weight.shape == (self.inst.shape[0], 1)
         # Note we must transpose the weight column vector to compare
         # it properly with the simple input weights tuple because of
         # numpy broadcasting producing a boolean matrix.
-        self.assertTrue((self.inst.weight.T==self.weights).all())
+        assert (self.inst.weight.T == self.weights).all()
 
     # ----------------------------------------------------------------
     # Test methods
     # ----------------------------------------------------------------
-    @data(
+    @pytest.mark.parametrize("reqts", [
         #[('Irrelevant requirement', 0.0, ValueError),], # not enforced
         [('Unimportant requirement', 0.1, None),],
         [('Important requirement', 0.9, None),],
@@ -217,7 +210,7 @@ class TestCODA(unittest.TestCase):
         [('Sole requirement', 1.0, None),],
         [('Sole requirement', 1.0, None),
          ('Another requirement', 0.1, RuntimeError)],
-    )
+    ])
     def test_add_requirement__prenormalised(self, reqts):
         inst = models.CODA()
         i = 0
@@ -225,34 +218,30 @@ class TestCODA(unittest.TestCase):
             if exception is None:
                 inst.add_requirement(name, normwt, normalise=False)
                 i += 1
-                self.assertEqual(len(inst.requirements), i)
-                self.assertEqual(inst.requirements[i-1].name, name)
-                self.assertEqual(inst.requirements[i-1].weight,
-                                 normwt)
+                assert len(inst.requirements) == i
+                assert inst.requirements[i-1].name == name
+                assert inst.requirements[i-1].weight == normwt
             else:
-                self.assertRaises(exception, inst.add_requirement,
-                                  name, normwt, normalise=False)
+                with pytest.raises(exception):
+                    inst.add_requirement(name, normwt, normalise=False)
 
-    @data(
+    @pytest.mark.parametrize("weights", [
         (1.0, 1.0),
         (1.0, 1.0, 1.0, 1.0),
         (0.1, 0.2, 0.3, 0.4)
-    )
+    ])
     def test_add_requirement__unnormalised(self, weights):
         inst = models.CODA()
         for i, wt in enumerate(weights):
             inst.add_requirement('Blah'+str(i), wt, normalise=True)
 
-        self.assertAlmostEqual(
-            sum([r.weight for r in inst.requirements]),
-            1.0
-        )
+        assert sum([r.weight for r in inst.requirements]) == pytest.approx(1.0)
 
-    @data(
+    @pytest.mark.parametrize("chars", [
         [('Characteristic', 0.0, 1.0, None, None),],
         [('Characteristic', 0.0, 1.0, 1.0, None),
          ('Another characteristic', -1.0, 11.0, None, None),],
-    )
+    ])
     def test_add_characteristic(self, chars):
         inst = models.CODA()
         i = 0
@@ -260,25 +249,23 @@ class TestCODA(unittest.TestCase):
             if exception is None:
                 inst.add_characteristic(name, (llim, ulim), value)
                 i += 1
-                self.assertEqual(len(inst.characteristics), i)
-                self.assertEqual(inst.characteristics[i-1].name, name)
-                self.assertEqual(inst.characteristics[i-1].limits,
-                                 (llim, ulim))
+                assert len(inst.characteristics) == i
+                assert inst.characteristics[i-1].name == name
+                assert inst.characteristics[i-1].limits == (llim, ulim)
                 # Value not set in these test data.
-                #self.assertEqual(inst.characteristics[i-1].value,
-                #				 value)
+                #assert inst.characteristics[i-1].value == value
             else:
-                self.assertRaises(exception, inst.add_characteristic,
-                                  name, normwt)
+                with pytest.raises(exception):
+                    inst.add_characteristic(name, (llim, ulim), value)
 
-    @data(
+    @pytest.mark.parametrize("rels", [
         [(0, 0, 'max', 0.1, 1.0, None, None),],
         [(0, 0, 'min', 0.1, 1.0, None, None),],
         [(0, 0, 'opt', 0.1, 1.0, 1.0, None),],
         [(0, 5, 'opt', 0.1, 1.0, 1.0, KeyError),],
         [(0, 0, 'max', 0.1, 1.0, None, None),
          (0, 1, 'max', 0.1, 1.0, None, None),],
-    )
+    ])
     def test_add_relationship(self, rels):
         inst = self.inst
         for (r, c, type_, corr, tv, tol, exception) in rels:
@@ -295,52 +282,45 @@ class TestCODA(unittest.TestCase):
             if exception is None:
                 inst.add_relationship(*args)
             else:
-                self.assertRaises(exception, inst.add_relationship,
-                                  *args)
+                with pytest.raises(exception):
+                    inst.add_relationship(*args)
                 continue
 
-            self.assertIsInstance(inst.matrix[r,c], cls)
-            self.assertEqual(inst.matrix[r,c].correlation, corr)
+            assert isinstance(inst.matrix[r, c], cls)
+            assert inst.matrix[r, c].correlation == corr
 
-    @data(
+    @pytest.mark.parametrize("rlkup, clkup, exception", [
         ['Requirement0', 0, None],
         [0, 'Characteristic0', None],
-        ['requirement0', 0, KeyError], # Case-sensitive for now.
-        ['Requirement2', 0, KeyError], # Not present.
+        ['requirement0', 0, KeyError],  # Case-sensitive for now.
+        ['Requirement2', 0, KeyError],  # Not present.
         ['Requirement0', 'Characteristic0', None],
         ['Requirement1', 'Characteristic0', None],
         [1, 'Characteristic0', None],
-    )
-    @unpack
-    def test_add_relationship__by_name(self, rlkup, clkup, exception):
-        """Given two requirements, 1 characteristic - add relations.
-        """
+    ])
+    def test_add_relationship__by_name(self, rlkup, clkup, exception, mocker):
+        """Given two requirements, 1 characteristic - add relations."""
         inst = models.CODA()
 
-        mock1 = mock.Mock()
+        mock1 = mocker.Mock()
         mock1.name = 'Requirement0'
-        mock3 = mock.Mock()
+        mock3 = mocker.Mock()
         mock3.name = 'Requirement1'
-        inst._requirements = (mock1,mock3)
+        inst._requirements = (mock1, mock3)
 
-        mock2 = mock.Mock()
+        mock2 = mocker.Mock()
         mock2.name = 'Characteristic0'
         inst._characteristics = (mock2,)
 
         if exception is None:
             inst.add_relationship(rlkup, clkup, 'max', 1.0, 1.0)
             r = rlkup if isinstance(rlkup, int) else int(rlkup[-1])
-            self.assertIsInstance(inst.matrix[r,0], models.CODAMaximise)
+            assert isinstance(inst.matrix[r, 0], models.CODAMaximise)
         else:
-            self.assertRaises(exception, inst.add_relationship,
-                              rlkup, clkup, 'max', 1.0, 1.0)
+            with pytest.raises(exception):
+                inst.add_relationship(rlkup, clkup, 'max', 1.0, 1.0)
 
-    @mock.patch.object(models.CODA, 'add_relationship')
-    @mock.patch.object(models.CODA, 'add_characteristic')
-    @mock.patch.object(models.CODA, 'add_requirement')
-    def test_read_excel(self, mock_add_requirement,
-                        mock_add_characteristic,
-                        mock_add_relationship):
+    def test_read_excel(self, mocker):
         """Constructor adds elements in turn from the parser.
 
         The parser provides three methods:
@@ -360,6 +340,16 @@ class TestCODA(unittest.TestCase):
         values for these get methods are passed to the add methods in
         the correct fashion.
         """
+        mock_add_requirement = mocker.patch.object(
+            models.CODA, 'add_requirement'
+        )
+        mock_add_characteristic = mocker.patch.object(
+            models.CODA, 'add_characteristic'
+        )
+        mock_add_relationship = mocker.patch.object(
+            models.CODA, 'add_relationship'
+        )
+
         dummy_records = {
             'requirements': [
                 io.CODASheet.ReqRecord('Requirement 1', 0.33),
@@ -375,7 +365,7 @@ class TestCODA(unittest.TestCase):
                     'Requirement 1',
                     'Characteristic 1',
                     'min',
-                    '---', # TODO: Remove redundant information
+                    '---',  # TODO: Remove redundant information
                     3
                 ),
                 io.CODASheet.OptRelRecord(
@@ -396,11 +386,11 @@ class TestCODA(unittest.TestCase):
             ]
         }
 
-        stub_parser = mock.MagicMock(spec_set=io.CompactExcelParser)
+        stub_parser = mocker.MagicMock(spec_set=io.CompactExcelParser)
         for s in 'requirements', 'characteristics', 'relationships':
             method = getattr(stub_parser, 'get_{}'.format(s))
             method.return_value = dummy_records[s]
-        mock_parser_class = mock.Mock()
+        mock_parser_class = mocker.Mock()
         mock_parser_class.return_value = stub_parser
 
         sut = models.CODA.read_excel('/dummy/path',
@@ -408,21 +398,21 @@ class TestCODA(unittest.TestCase):
 
         mock_parser_class.assert_called_once_with('/dummy/path')
         mock_add_requirement.assert_has_calls([
-            mock.call('Requirement 1', 0.33),
-            mock.call('Requirement 2', 0.5),
-            mock.call('Requirement 3', 0.17),
+            mocker.call('Requirement 1', 0.33),
+            mocker.call('Requirement 2', 0.5),
+            mocker.call('Requirement 3', 0.17),
         ])
         mock_add_characteristic.assert_has_calls([
-            mock.call('Characteristic 1', (1, 5)),
-            mock.call('Characteristic 2', (10, 20)),
+            mocker.call('Characteristic 1', (1, 5)),
+            mocker.call('Characteristic 2', (10, 20)),
         ])
         mock_add_relationship.assert_has_calls([
-            mock.call('Requirement 1', 'Characteristic 1', 'min',
-                      '---', 3),
-            mock.call('Requirement 2', 'Characteristic 1', 'opt',
-                      'ooo', 13, 1),
-            mock.call('Requirement 3', 'Characteristic 2', 'max',
-                      '+++', 3),
+            mocker.call('Requirement 1', 'Characteristic 1', 'min',
+                        '---', 3),
+            mocker.call('Requirement 2', 'Characteristic 1', 'opt',
+                        'ooo', 13, 1),
+            mocker.call('Requirement 3', 'Characteristic 2', 'max',
+                        '+++', 3),
         ])
 
     def test__merit(self):
@@ -438,38 +428,34 @@ class TestCODA(unittest.TestCase):
         "Internal" method because raw merit values are not considered
         particularly useful on their own at this point.
         """
-        self.assertIsInstance(self.inst._merit(), np.ndarray)
-        self.assertEqual(self.inst._merit().ndim, 2)
-        self.assertEqual(self.inst._merit().shape, self.inst.shape)
-        self.assertTrue((self.inst._merit()==self.merit).all())
+        assert isinstance(self.inst._merit(), np.ndarray)
+        assert self.inst._merit().ndim == 2
+        assert self.inst._merit().shape == self.inst.shape
+        assert (self.inst._merit() == self.merit).all()
 
 
-class TestCODACaseStudy1(unittest.TestCase):
+class TestCODACaseStudy1:
     """Case study of a bicycle wheel design based on ref 1."""
 
-    def setUp(self):
-        wheel = self.wheel = models.CODA()
-        self._setup_requirements()
-        self._setup_characteristics()
-        self._setup_relationships()
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.wheel = wheel = models.CODA()
+        self._setup_requirements(wheel)
+        self._setup_characteristics(wheel)
+        self._setup_relationships(wheel)
 
-    def _setup_requirements(self):
-        wheel = self.wheel
+    def _setup_requirements(self, wheel):
         for name in ('Stiffness', 'Friction', 'Weight',
                      'Manufacturability', 'Repairability'):
             wheel.add_requirement(name, 0.2)
 
-    def _setup_characteristics(self):
-        wheel = self.wheel
+    def _setup_characteristics(self, wheel):
         wheel.add_characteristic('Tyre Diameter', (24, 29), 24)
         wheel.add_characteristic('Tyre Width', (11, 18), 13)
         wheel.add_characteristic('Spoke Thickness', (2.8, 5), 4.3)
-        wheel.add_characteristic('Use of Composites', (0.05, 0.8),
-                                 0.2)
+        wheel.add_characteristic('Use of Composites', (0.05, 0.8), 0.2)
 
-    def _setup_relationships(self):
-        wheel = self.wheel
-
+    def _setup_relationships(self, wheel):
         reqt = 'Stiffness'
         wheel.add_relationship(reqt, 0, 'min', 'strong', 29)
         wheel.add_relationship(reqt, 1, 'max', 'moderate', 12)
@@ -507,7 +493,7 @@ class TestCODACaseStudy1(unittest.TestCase):
                                'strong', 0.25)
 
     def test_merit(self):
-        self.assertAlmostEqual(self.wheel.merit, .5788, places=4)
+        assert self.wheel.merit == pytest.approx(0.5788, abs=1e-4)
 
     def test_sum_of_correlations(self):
         """Sum of correlation factors for all requirements."""
@@ -517,12 +503,8 @@ class TestCODACaseStudy1(unittest.TestCase):
         )
 
     def test_read_excel(self):
-        try:
-            import pandas
-            import xlrd
-        except ImportError:
-            self.skipTest("`pandas` and `xlrd` required for "
-                          "spreadsheet parsing")
+        pytest.importorskip('pandas', reason="`pandas` required for spreadsheet parsing")
+        pytest.importorskip('xlrd', reason="`xlrd` required for spreadsheet parsing")
         model = models.CODA.read_excel(
             os.path.join(DATA_DIR, 'demo_model_casestudy1.xlsx')
         )
@@ -530,13 +512,13 @@ class TestCODACaseStudy1(unittest.TestCase):
         for char, ref in zip(model.characteristics,
                              self.wheel.characteristics):
             char.value = ref.value
-        self.assertEqual(self.wheel.merit, model.merit)
+        assert self.wheel.merit == model.merit
 
 
-@ddt
-class TestCODACharacteristic(unittest.TestCase):
+class TestCODACharacteristic:
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self):
         class CODACharacteristic(models.CODACharacteristic):
             def __init__(self):
                 pass
@@ -551,46 +533,48 @@ class TestCODACharacteristic(unittest.TestCase):
         inst = models.CODACharacteristic('Name')
         # This might want to be None? Requires everything supporting
         # that as an input though.
-        self.assertRaises(AttributeError, getattr, inst, 'value')
+        with pytest.raises(AttributeError):
+            _ = inst.value
 
-    @data(
+    @pytest.mark.parametrize("value, exception", [
         (-0.01, ValueError),
         (0.0, None),
         (0.5, None),
         (1.0, None),
         (1.01, ValueError),
-    )
-    @unpack
+    ])
     def test_value__set_with_default_limits(self, value, exception):
         if exception is not None:
-            self.assertRaises(exception, setattr, self.inst, 'value',
-                              value)
-
+            with pytest.raises(exception):
+                setattr(self.inst, 'value', value)
         else:
             self.inst.value = value
-            self.assertEqual(self.inst.value, value)
+            assert self.inst.value == value
 
     def test_limits__get__default(self):
-        self.assertEqual(self.inst.limits, self.inst._default_limits)
+        assert self.inst.limits == self.inst._default_limits
 
-    @data((0.0, 1.0), [0.0, 1.0], (None, None), (0, None), (None, 1))
+    @pytest.mark.parametrize("value", [
+        (0.0, 1.0), [0.0, 1.0], (None, None), (0, None), (None, 1)
+    ])
     def test_limits__set__valid(self, value):
         self.inst.limits = value
-        self.assertEqual(self.inst.limits, tuple(value))
+        assert self.inst.limits == tuple(value)
 
 
-@ddt
-class TestCODARequirement(unittest.TestCase):
+class TestCODARequirement:
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self):
         class CODARequirement(models.CODARequirement):
             def __init__(self):
                 pass
         self.inst = CODARequirement()
 
-    @data((-0.01, False), (0.0, True), (0.5, True), (1.0, True),
-          (1.1, False))
-    @unpack
+    @pytest.mark.parametrize("wt, valid", [
+        (-0.01, False), (0.0, True), (0.5, True), (1.0, True),
+        (1.1, False)
+    ])
     def test_weight__set(self, wt, valid):
         # Prototypes used context to allow weights to be provided in a
         # non-normalised form and this property would handle the
@@ -598,17 +582,17 @@ class TestCODARequirement(unittest.TestCase):
         # requirements. This functionality isn't implemented here, but
         # might still be useful.
         if not valid:
-            self.assertRaises(ValueError, setattr, self.inst,
-                              'weight', wt)
+            with pytest.raises(ValueError):
+                setattr(self.inst, 'weight', wt)
         else:
             self.inst.weight = wt
-            self.assertEqual(self.inst.weight, wt)
+            assert self.inst.weight == wt
 
 
-@ddt
-class TestCODARelationship(unittest.TestCase):
+class TestCODARelationship:
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self):
         class Concrete(models.CODARelationship):
             def __init__(self):
                 pass
@@ -619,109 +603,107 @@ class TestCODARelationship(unittest.TestCase):
         self.cls = Concrete
         self.inst = Concrete()
 
-    @data([0.0, 0.0, True],
-          [0.1, 0.1,  True],
-          [0.3, 0.3, True],
-          [0.9, 0.9, True],
-          [1.0, 0.1, True],
-          [0.25, None, False],
-          [-0.1, None, False],
-          [0, 0.0, True],
-          [1, 0.1, True],
-          [3, 0.3, True],
-          [9, 0.9, True],
-          ['none', 0.0, True],
-          [None, 0.0, True],
-          ['weak', 0.1, True],
-          ['moderate', 0.3, True],
-          ['medium', 0.3, True],
-          ['strong', 0.9, True],
-          ['---', 0.9, True],
-          ['+++', 0.9, True],
-          ['ooo', 0.9, True],
-          ['--', 0.3, True],
-          ['++', 0.3, True],
-          ['oo', 0.3, True],
-          ['o', 0.1, True],
-          ['o', 0.1, True],
-          ['o', 0.1, True],
-    )
-    @unpack
+    @pytest.mark.parametrize("value, internal_value, valid", [
+        [0.0, 0.0, True],
+        [0.1, 0.1, True],
+        [0.3, 0.3, True],
+        [0.9, 0.9, True],
+        [1.0, 0.1, True],
+        [0.25, None, False],
+        [-0.1, None, False],
+        [0, 0.0, True],
+        [1, 0.1, True],
+        [3, 0.3, True],
+        [9, 0.9, True],
+        ['none', 0.0, True],
+        [None, 0.0, True],
+        ['weak', 0.1, True],
+        ['moderate', 0.3, True],
+        ['medium', 0.3, True],
+        ['strong', 0.9, True],
+        ['---', 0.9, True],
+        ['+++', 0.9, True],
+        ['ooo', 0.9, True],
+        ['--', 0.3, True],
+        ['++', 0.3, True],
+        ['oo', 0.3, True],
+        ['o', 0.1, True],
+        ['o', 0.1, True],
+        ['o', 0.1, True],
+    ])
     def test_correlation(self, value, internal_value, valid):
         """Correlation value must be one of a restricted set."""
         # TODO: It might be more flexible to enforce this further up
-        #		for different scaling systems. Could also be done with
-        #		a mixin implementation implementation
-        self.assertRaises(AttributeError, getattr, self.inst,
-                          'correlation')
+        #       for different scaling systems. Could also be done with
+        #       a mixin implementation
+        with pytest.raises(AttributeError):
+            _ = self.inst.correlation
         if valid:
             self.inst.correlation = value
-            self.assertEqual(self.inst.correlation, internal_value)
+            assert self.inst.correlation == internal_value
         else:
-            self.assertRaises(ValueError, setattr, self.inst,
-                              'correlation', value)
+            with pytest.raises(ValueError):
+                setattr(self.inst, 'correlation', value)
 
     def test_target(self):
         """Target value may be anything, but check it's settable."""
-        self.assertRaises(AttributeError, getattr, self.inst,
-                          'target')
+        with pytest.raises(AttributeError):
+            _ = self.inst.target
         self.inst.target = 0.0
-        self.assertEqual(self.inst.target, 0.0)
+        assert self.inst.target == 0.0
 
 
-class TestCODANull(unittest.TestCase):
+class TestCODANull:
 
     def test___init__(self):
         """Takes no arguments, has a correlation and merit of zero."""
         null = models.CODANull()
-        self.assertEqual(null.correlation, 0.0)
-        self.assertIs(null.target, None)
-        self.assertEqual(null(None), 0.0)
+        assert null.correlation == 0.0
+        assert null.target is None
+        assert null(None) == 0.0
 
     def test__attributes_not_settable(self):
         null = models.CODANull()
 
-        self.assertRaises(TypeError, setattr, null, 'correlation', 1)
-        self.assertRaises(TypeError, setattr, null, 'target', 1)
+        with pytest.raises(TypeError):
+            null.correlation = 1
+        with pytest.raises(TypeError):
+            null.target = 1
 
 
-class TestCODAMaximise(unittest.TestCase):
+class TestCODAMaximise:
 
     # TODO: compare function over range.
 
     def test_merit(self):
         inst = models.CODAMaximise(target=1.0, correlation=None)
-        self.assertAlmostEqual(inst(1.0), 0.5)
-        self.assertLess(inst(0.1), 0.5)
-        self.assertGreater(inst(2.0), 0.5)
+        assert inst(1.0) == pytest.approx(0.5)
+        assert inst(0.1) < 0.5
+        assert inst(2.0) > 0.5
 
 
-class TestCODAMinimise(unittest.TestCase):
+class TestCODAMinimise:
 
     # TODO: compare function over range.
 
     def test_merit(self):
         inst = models.CODAMinimise(target=1.0, correlation=None)
-        self.assertAlmostEqual(inst(1.0), 0.5)
-        self.assertGreater(inst(0.1), 0.5)
-        self.assertLess(inst(2.0), 0.5)
+        assert inst(1.0) == pytest.approx(0.5)
+        assert inst(0.1) > 0.5
+        assert inst(2.0) < 0.5
 
 
-class TestCODAOptimise(unittest.TestCase):
+class TestCODAOptimise:
 
     # TODO: compare function over range.
 
     def test_merit(self):
         inst = models.CODAOptimise(target=1.0, correlation=None,
                                    tolerance=0.2)
-        self.assertAlmostEqual(inst(0.8), 0.5)
-        self.assertAlmostEqual(inst(1.2), 0.5)
-        self.assertAlmostEqual(inst(1.0), 1.0)
-        self.assertGreater(inst(1.1), 0.5)
-        self.assertGreater(inst(0.9), 0.5)
-        self.assertLess(inst(2.0), 0.5)
-        self.assertLess(inst(0.0), 0.5)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert inst(0.8) == pytest.approx(0.5)
+        assert inst(1.2) == pytest.approx(0.5)
+        assert inst(1.0) == pytest.approx(1.0)
+        assert inst(1.1) > 0.5
+        assert inst(0.9) > 0.5
+        assert inst(2.0) < 0.5
+        assert inst(0.0) < 0.5

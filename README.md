@@ -22,12 +22,41 @@ Features
   - Requirements weighting with a Binary Weighting Matrix
   - Programmatic or Spreadsheet based model creation (via Excel
     workbooks or Google Sheets).
+  - Command-line interface for quick model inspection and interactive weighting
 
 
 Install
 -------
 
     pip install vdd
+
+
+CLI
+---
+
+`vdd` ships with a command-line interface for the two core workflows.
+
+### Inspect a CODA model
+
+Load a CODA model from an Excel file and print the overall design merit
+alongside a per-requirement satisfaction summary:
+
+    vdd coda path/to/model.xlsx
+
+By default the compact Excel format is assumed. Pass `--parser full` for the
+standard format:
+
+    vdd coda path/to/model.xlsx --parser full
+
+### Weight requirements interactively
+
+Step through a pairwise comparison of requirements and print the resulting
+normalised scores:
+
+    vdd requirements weight "Lightweight" "Stiff" "Durable"
+
+Questions are shuffled by default. Pass `--no-shuffle` to work through them
+in a fixed order.
 
 
 Documentation
@@ -42,10 +71,9 @@ Currently just stored in the repo.
 Development
 -----------
 
-`poetry` must be installed in the local development environment as a pre-requisite. In the repository root:
+In the repository root:
 
-
-	poetry install
+	uv sync
 
 
 ### Releases
