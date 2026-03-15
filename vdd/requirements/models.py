@@ -87,14 +87,6 @@ class BinWM(object):
         # Wrapper for testing
         print(string)
 
-        properties = {'width':'15em', 'text-align':'center'}
-        styles = [{
-            'selector': 'th',
-            'props': [('text-align', 'center')]
-        }]
-        df.style.set_properties(**properties).set_table_styles(styles)
-        return df
-
     def get_score_as_series(self):
         # Glue method until API changes; see score TODO
         try:
