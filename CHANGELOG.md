@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/corriander/vdd/compare/v2.0.1...v2.0.2) (2026-03-15)
+
+
+### Bug Fixes
+
+* uv, update deps, fix tests ([feee20c](https://github.com/corriander/vdd/commit/feee20c75a02e17e171bf78a09aea64754a3640a))
+
 ## [2.0.1](https://github.com/corriander/vdd/compare/v2.0.0...v2.0.1) (2023-11-07)
 
 
