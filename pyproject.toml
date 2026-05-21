@@ -1,6 +1,6 @@
 [project]
 name = "vdd"
-version = "3.0.0"
+version = "3.0.1"
 description = "Tools for Value-Driven Design"
 authors = [
     {name = "Alex Corrie", email = "ajccode@gmail.com"}

@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.0.1](https://github.com/corriander/vdd/compare/v3.0.0...v3.0.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **deps:** bump cryptography from 46.0.5 to 46.0.7 ([#23](https://github.com/corriander/vdd/issues/23)) ([d1af22f](https://github.com/corriander/vdd/commit/d1af22f843bda7a78a82959f2e1b7ec96a561667))
+* **deps:** bump idna from 3.11 to 3.15 ([#26](https://github.com/corriander/vdd/issues/26)) ([b2bad58](https://github.com/corriander/vdd/commit/b2bad580d81da355d0e9acf2e5b43f91a6980085))
+* **deps:** bump numpy from 2.4.3 to 2.4.6 ([2d8b4f4](https://github.com/corriander/vdd/commit/2d8b4f4327f54c8b2fdfe342d83d3098f42b995a))
+* **deps:** bump numpy from 2.4.3 to 2.4.6 ([#30](https://github.com/corriander/vdd/issues/30)) ([5dbe3dc](https://github.com/corriander/vdd/commit/5dbe3dc874b2296f43bc3a05f825231b32abce7f))
+* **deps:** bump pandas from 3.0.1 to 3.0.3 ([1a9b086](https://github.com/corriander/vdd/commit/1a9b0866f7fb31f5fd65f2ab620ec82d297e71af))
+* **deps:** bump pandas from 3.0.1 to 3.0.3 ([#29](https://github.com/corriander/vdd/issues/29)) ([4311520](https://github.com/corriander/vdd/commit/4311520902ea5677a560f98af18332ddff3c9de2))
+* **deps:** bump platformdirs from 4.9.4 to 4.9.6 ([988d73b](https://github.com/corriander/vdd/commit/988d73b072740ca223b6d051c501f4f69ada04cb))
+* **deps:** bump platformdirs from 4.9.4 to 4.9.6 ([#31](https://github.com/corriander/vdd/issues/31)) ([912f50d](https://github.com/corriander/vdd/commit/912f50df726c041ce482f4018e2e70ace79c03a9))
+* **deps:** bump pyasn1 from 0.6.2 to 0.6.3 ([#19](https://github.com/corriander/vdd/issues/19)) ([c44c902](https://github.com/corriander/vdd/commit/c44c9020812c1cfe8ebcd5c13eabd4b626971633))
+* **deps:** bump pygments from 2.19.2 to 2.20.0 ([#22](https://github.com/corriander/vdd/issues/22)) ([cfa5a99](https://github.com/corriander/vdd/commit/cfa5a991f3b42d6422405b68992966b2d4129b90))
+* **deps:** bump requests from 2.32.5 to 2.33.0 ([#20](https://github.com/corriander/vdd/issues/20)) ([7466b2d](https://github.com/corriander/vdd/commit/7466b2d47fda21d126cd8d7482c3a607910f2c78))
+* **deps:** bump urllib3 from 2.6.3 to 2.7.0 ([#25](https://github.com/corriander/vdd/issues/25)) ([737936d](https://github.com/corriander/vdd/commit/737936df5a985147babcf0c559b20b6c0fa99270))
+
 ## [3.0.0](https://github.com/corriander/vdd/compare/v2.0.2...v3.0.0) (2026-03-15)
 
 
