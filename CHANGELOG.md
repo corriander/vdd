@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.0.3](https://github.com/corriander/vdd/compare/v3.0.2...v3.0.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* **coda:** guard against requirements with no relationships ([6e321fc](https://github.com/corriander/vdd/commit/6e321fc33af57676632cb4d261b0bdf8b918dcc2))
+* **coda:** make CODA.compare return a bool ([3f9e6d1](https://github.com/corriander/vdd/commit/3f9e6d16088899ea584ab32e20c5084077241a52))
+* **coda:** make relationship equality type-aware ([be60fe6](https://github.com/corriander/vdd/commit/be60fe6101d2b744a7ee85eb2cb50f3139e0a075))
+* **deps:** bump cryptography from 46.0.7 to 48.0.1 ([9ede717](https://github.com/corriander/vdd/commit/9ede71730fd489366a49c91a30fb3622c3cf447e))
+* **deps:** bump cryptography from 46.0.7 to 48.0.1 ([#38](https://github.com/corriander/vdd/issues/38)) ([0bd491d](https://github.com/corriander/vdd/commit/0bd491d73af030a63d6c555a5b6116050a6c824b))
+* merit NaN guard + hygiene batch ([#45](https://github.com/corriander/vdd/issues/45)) ([23dee42](https://github.com/corriander/vdd/commit/23dee425b71a22bf0502889d0694f0193bdf4bc2))
+
+
+### Documentation
+
+* correct google sheets API references ([92cffb5](https://github.com/corriander/vdd/commit/92cffb5eff86cdaa640e82040a3198a95044fd99))
+
 ## [3.0.2](https://github.com/corriander/vdd/compare/v3.0.1...v3.0.2) (2026-06-02)
 
 
