@@ -46,6 +46,59 @@ class TestGSheetsFacade:
         assert retval is None
 
 
+class TestGSheetsFacadeClient:
+    """Credential resolution for the (cached) pygsheets client."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, mocker):
+        self.sut = io.GSheetsFacade('dummy workbook name')
+        self.mock_authorize = mocker.patch.object(io.pygsheets, 'authorize')
+
+    def test_client_uses_env_var_when_set(self, monkeypatch):
+        """Env var (holding JSON content) takes precedence over file."""
+        monkeypatch.setenv(
+            io.GSheetsFacade._credentials_env_var, '{"type": "service_account"}'
+        )
+
+        client = self.sut._client
+
+        self.mock_authorize.assert_called_once_with(
+            service_account_env_var=io.GSheetsFacade._credentials_env_var
+        )
+        assert client is self.mock_authorize.return_value
+
+    def test_client_falls_back_to_file_when_env_var_unset(self, monkeypatch):
+        """With no env var, the on-disk credentials file is used."""
+        monkeypatch.delenv(io.GSheetsFacade._credentials_env_var, raising=False)
+
+        client = self.sut._client
+
+        self.mock_authorize.assert_called_once_with(
+            service_account_file=io.GSheetsFacade._credentials_path
+        )
+        assert client is self.mock_authorize.return_value
+
+    def test_client_falls_back_to_file_when_env_var_empty(self, monkeypatch):
+        """An empty env var value is treated as unset (file fallback)."""
+        monkeypatch.setenv(io.GSheetsFacade._credentials_env_var, '')
+
+        self.sut._client
+
+        self.mock_authorize.assert_called_once_with(
+            service_account_file=io.GSheetsFacade._credentials_path
+        )
+
+    def test_client_is_cached(self, monkeypatch):
+        """The authorized client is only constructed once."""
+        monkeypatch.delenv(io.GSheetsFacade._credentials_env_var, raising=False)
+
+        first = self.sut._client
+        second = self.sut._client
+
+        self.mock_authorize.assert_called_once()
+        assert first is second
+
+
 class TestWorksheetAdapter:
     """Adapter for external (pygsheets) worksheet model."""
 
