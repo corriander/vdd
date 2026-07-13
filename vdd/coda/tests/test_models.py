@@ -1,3 +1,4 @@
+import json
 import os
 
 import numpy as np
@@ -6,6 +7,7 @@ import pytest
 from .. import models
 from .. import io
 from . import DATA_DIR
+from vdd.requirements import models as rmodels
 
 
 class TestCODA:
@@ -513,6 +515,193 @@ class TestCODACaseStudy1:
                              self.wheel.characteristics):
             char.value = ref.value
         assert self.wheel.merit == model.merit
+
+
+class TestCODAJSONRoundTrip:
+    """Native JSON serialisation round-trips for CODA models."""
+
+    def _build_wheel(self):
+        # Programmatic copy of the bicycle-wheel case study (ref 1).
+        wheel = models.CODA()
+        for name in ('Stiffness', 'Friction', 'Weight',
+                     'Manufacturability', 'Repairability'):
+            wheel.add_requirement(name, 0.2)
+
+        wheel.add_characteristic('Tyre Diameter', (24, 29), 24)
+        wheel.add_characteristic('Tyre Width', (11, 18), 13)
+        wheel.add_characteristic('Spoke Thickness', (2.8, 5), 4.3)
+        wheel.add_characteristic('Use of Composites', (0.05, 0.8), 0.2)
+
+        reqt = 'Stiffness'
+        wheel.add_relationship(reqt, 0, 'min', 'strong', 29)
+        wheel.add_relationship(reqt, 1, 'max', 'moderate', 12)
+        wheel.add_relationship(reqt, 2, 'max', 'strong', 3)
+        wheel.add_relationship(reqt, 3, 'opt', 'moderate', 0.5, 0.2)
+
+        reqt = 'Friction'
+        wheel.add_relationship(reqt, 'Tyre Diameter', 'max', 'moderate', 25)
+        wheel.add_relationship(reqt, 'Tyre Width', 'max', 'strong', 11)
+
+        reqt = 'Weight'
+        wheel.add_relationship(reqt, 'Tyre Diameter', 'min', 'strong', 26)
+        wheel.add_relationship(reqt, 'Tyre Width', 'min', 'strong', 15)
+        wheel.add_relationship(reqt, 'Spoke Thickness', 'min', 'moderate', 3.5)
+        wheel.add_relationship(reqt, 'Use of Composites', 'max', 'strong', 0.3)
+
+        reqt = 'Manufacturability'
+        wheel.add_relationship(reqt, 'Tyre Width', 'max', 'weak', 12)
+        wheel.add_relationship(reqt, 'Spoke Thickness', 'max', 'moderate', 2.9)
+        wheel.add_relationship(reqt, 'Use of Composites', 'min', 'strong', 0.5)
+
+        reqt = 'Repairability'
+        wheel.add_relationship(reqt, 'Tyre Width', 'max', 'weak', 14)
+        wheel.add_relationship(reqt, 'Spoke Thickness', 'max', 'moderate', 3.8)
+        wheel.add_relationship(reqt, 'Use of Composites', 'min', 'strong', 0.25)
+
+        return wheel
+
+    def _assert_equivalent(self, a, b):
+        assert ([r.name for r in a.requirements] ==
+                [r.name for r in b.requirements])
+        assert ([c.name for c in a.characteristics] ==
+                [c.name for c in b.characteristics])
+        for ca, cb in zip(a.characteristics, b.characteristics):
+            assert ca.limits == cb.limits
+            assert ca.value == cb.value
+        np.testing.assert_array_almost_equal(a.correlation, b.correlation)
+        np.testing.assert_array_almost_equal(a.weight, b.weight)
+        np.testing.assert_array_almost_equal(a.satisfaction, b.satisfaction)
+        assert a.merit == pytest.approx(b.merit)
+
+    def test_to_dict_schema(self):
+        """Dict has the expected flat schema and only non-null rels."""
+        wheel = self._build_wheel()
+        d = wheel.to_dict()
+
+        assert set(d) == {'requirements', 'characteristics',
+                          'relationships'}
+        assert d['requirements'][0] == {
+            'name': 'Stiffness', 'weight': 0.2, 'normalise': True
+        }
+        assert d['characteristics'][0] == {
+            'name': 'Tyre Diameter', 'limits': [24, 29], 'value': 24
+        }
+        # 16 non-null relationships (nulls omitted).
+        assert len(d['relationships']) == 16
+
+        opt = [r for r in d['relationships'] if r['type'] == 'opt']
+        assert len(opt) == 1
+        assert opt[0]['target'] == 0.5
+        assert opt[0]['tolerance'] == 0.2
+        assert all(r['tolerance'] is None
+                   for r in d['relationships'] if r['type'] != 'opt')
+
+    def test_roundtrip_dict(self):
+        wheel = self._build_wheel()
+        assert wheel.merit == pytest.approx(0.5788, abs=1e-4)
+        clone = models.CODA.from_dict(wheel.to_dict())
+        self._assert_equivalent(wheel, clone)
+
+    def test_roundtrip_json_string(self):
+        wheel = self._build_wheel()
+        text = wheel.to_json()
+        assert isinstance(text, str)
+        clone = models.CODA.from_dict(json.loads(text))
+        self._assert_equivalent(wheel, clone)
+
+    def test_roundtrip_json_file(self, tmp_path):
+        wheel = self._build_wheel()
+        path = tmp_path / 'wheel.json'
+        assert wheel.to_json(str(path)) is None
+        clone = models.CODA.read_json(str(path))
+        self._assert_equivalent(wheel, clone)
+
+    def test_roundtrip_optimise_and_unset_values(self):
+        """Optimise tolerance and unset characteristic values survive."""
+        model = models.CODA()
+        model.add_requirement('Comfort', 2.0)
+        model.add_requirement('Speed', 1.0)
+        model.add_characteristic('Damping')            # default limits
+        model.add_characteristic('Power', (0.0, 100.0))  # value unset
+        model.add_relationship('Comfort', 'Damping', 'opt', 'strong',
+                               0.5, 0.1)
+        model.add_relationship('Speed', 'Power', 'max', 'moderate', 50)
+
+        d = model.to_dict()
+        assert d['characteristics'][0]['value'] is None
+        assert d['characteristics'][1]['value'] is None
+        # Raw base_weight preserved (not the normalised value).
+        assert d['requirements'][0]['weight'] == 2.0
+        assert d['requirements'][0]['normalise'] is True
+
+        clone = models.CODA.from_dict(d)
+        assert [r.name for r in clone.requirements] == ['Comfort', 'Speed']
+        np.testing.assert_array_almost_equal(clone.weight, model.weight)
+        assert (clone.characteristics[0].limits ==
+                model.characteristics[0].limits)
+        with pytest.raises(AttributeError):
+            _ = clone.characteristics[0].value
+
+        opt = clone.matrix[0, 0]
+        assert isinstance(opt, models.CODAOptimise)
+        assert opt.target == 0.5
+        assert opt.tolerance == 0.1
+
+    def test_roundtrip_prenormalised_weights(self):
+        """normalise=False requirements round-trip as CODARequirement."""
+        model = models.CODA()
+        model.add_requirement('A', 0.3, normalise=False)
+        model.add_requirement('B', 0.7, normalise=False)
+
+        d = model.to_dict()
+        assert d['requirements'] == [
+            {'name': 'A', 'weight': 0.3, 'normalise': False},
+            {'name': 'B', 'weight': 0.7, 'normalise': False},
+        ]
+
+        clone = models.CODA.from_dict(d)
+        assert isinstance(clone.requirements[0], models.CODARequirement)
+        assert not isinstance(clone.requirements[0],
+                              models.CODARequirementNorm)
+        np.testing.assert_array_almost_equal(clone.weight, model.weight)
+
+
+class TestCODAAddRequirementsFrom:
+    """Glue adding CODA requirements from a Binary Weighting Matrix."""
+
+    def _binwm(self):
+        bwm = rmodels.BinWM('Stiffness', 'Friction', 'Weight')
+        bwm._matrix = np.array([[0, 0, 1],
+                                [0, 0, 1],
+                                [0, 0, 0]])
+        return bwm
+
+    def test_binwm_score_sums_to_unity(self):
+        """Documents the assumption underpinning the glue's choices."""
+        bwm = self._binwm()
+        assert bwm.score.sum() == pytest.approx(1.0)
+
+    def test_names_and_weights_match_scores(self):
+        bwm = self._binwm()
+        coda = models.CODA()
+        coda.add_requirements_from(bwm)
+
+        assert ([r.name for r in coda.requirements] ==
+                list(bwm.requirements))
+        np.testing.assert_allclose(
+            [r.weight for r in coda.requirements], bwm.score
+        )
+
+    def test_further_requirements_mix_in(self):
+        """Self-normalising requirements let further ones be mixed."""
+        bwm = self._binwm()
+        coda = models.CODA()
+        coda.add_requirements_from(bwm)
+
+        coda.add_requirement('Cost', 1.0)  # normalise=True by default
+
+        assert len(coda.requirements) == 4
+        np.testing.assert_allclose(coda.weight.sum(), 1.0)
 
 
 class TestCODACharacteristic:
