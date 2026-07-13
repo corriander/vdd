@@ -495,6 +495,29 @@ class TestCODACaseStudy1:
     def test_merit(self):
         assert self.wheel.merit == pytest.approx(0.5788, abs=1e-4)
 
+    def test_merit__unlinked_requirement_raises(self):
+        """A requirement without relationships is a loud error.
+
+        Such a requirement has zero total correlation and would
+        otherwise produce a silent nan that poisons the merit.
+        """
+        self.wheel.add_requirement('Cost', 0.2)
+        with pytest.raises(ValueError) as excinfo:
+            _ = self.wheel.merit
+        msg = str(excinfo.value)
+        assert "no relationships defined" in msg
+        assert "'Cost'" in msg
+
+    def test_satisfaction__unlinked_requirements_named(self):
+        """All offending requirements are named in the error."""
+        self.wheel.add_requirement('Cost', 0.2)
+        self.wheel.add_requirement('Aesthetics', 0.2)
+        with pytest.raises(ValueError) as excinfo:
+            _ = self.wheel.satisfaction
+        msg = str(excinfo.value)
+        assert "'Cost'" in msg
+        assert "'Aesthetics'" in msg
+
     def test_sum_of_correlations(self):
         """Sum of correlation factors for all requirements."""
         np.testing.assert_array_almost_equal(
@@ -513,6 +536,42 @@ class TestCODACaseStudy1:
                              self.wheel.characteristics):
             char.value = ref.value
         assert self.wheel.merit == model.merit
+
+
+class TestCODACompare:
+    """Structural comparison of two CODA models."""
+
+    def _build(self, correlation='strong', reltype='max'):
+        model = models.CODA()
+        model.add_requirement('Requirement', 1.0)
+        model.add_characteristic('Characteristic', (0.0, 1.0), 0.5)
+        model.add_relationship('Requirement', 'Characteristic', reltype,
+                               correlation, 1.0)
+        return model
+
+    def test_equal_models(self):
+        """Identically constructed models compare equal."""
+        result = self._build().compare(self._build())
+        assert result is True
+
+    def test_different_correlation(self):
+        """Differing relationship correlation compares unequal."""
+        result = self._build('strong').compare(self._build('weak'))
+        assert result is False
+
+    def test_different_relationship_type(self):
+        """A flipped relationship direction compares unequal."""
+        a = self._build(reltype='max')
+        b = self._build(reltype='min')
+        assert a.compare(b) is False
+
+    def test_different_shape(self):
+        """Models of differing shape compare unequal."""
+        a = self._build()
+        b = self._build()
+        b.add_requirement('Extra', 1.0)
+        assert a.compare(b) is False
+        assert b.compare(a) is False
 
 
 class TestCODACharacteristic:
@@ -652,6 +711,38 @@ class TestCODARelationship:
         self.inst.target = 0.0
         assert self.inst.target == 0.0
 
+    def test___eq____same_type(self):
+        """Same type with matching correlation and target is equal."""
+        a = models.CODAMaximise('strong', 5.0)
+        b = models.CODAMaximise('strong', 5.0)
+        assert a == b
+        assert not a != b
+
+    def test___eq____type_aware(self):
+        """A flipped relationship direction is not equal.
+
+        Maximising and minimising relationships with the same
+        correlation and target model opposite goals.
+        """
+        maximise = models.CODAMaximise('strong', 5.0)
+        minimise = models.CODAMinimise('strong', 5.0)
+        assert maximise != minimise
+        assert not maximise == minimise
+
+    def test___eq____zero_correlation_is_not_null(self):
+        """A zero-correlation relationship is not a null one."""
+        maximise = models.CODAMaximise('none', None)
+        null = models.CODANull()
+        assert maximise != null
+        assert null != maximise
+
+    def test___eq____non_relationship(self):
+        """Comparison with arbitrary objects is False, not an error."""
+        maximise = models.CODAMaximise('strong', 5.0)
+        assert maximise != object()
+        assert not maximise == 'a string'
+        assert maximise.__eq__(42) is NotImplemented
+
 
 class TestCODANull:
 
@@ -707,3 +798,14 @@ class TestCODAOptimise:
         assert inst(0.9) > 0.5
         assert inst(2.0) < 0.5
         assert inst(0.0) < 0.5
+
+    def test___eq____tolerance_aware(self):
+        """Equality extends the base contract with tolerance."""
+        a = models.CODAOptimise('strong', 5.0, tolerance=0.2)
+        assert a == models.CODAOptimise('strong', 5.0, tolerance=0.2)
+        assert a != models.CODAOptimise('strong', 5.0, tolerance=0.3)
+        # Type-awareness and graceful non-relationship handling are
+        # inherited from the base class.
+        assert a != models.CODAMaximise('strong', 5.0)
+        assert a != object()
+        assert a.__eq__(42) is NotImplemented

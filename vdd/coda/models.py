@@ -139,9 +139,14 @@ class CODA(object):
         This is a value in the range [0.0, 1.0]. Note that this is a
         relative value and 50% merit can often represent a good
         mapping between requirements and characteristics.
+
+        Raises
+        ------
+
+        ValueError
+            If any requirement has no relationships defined (see
+            :attr:`satisfaction`).
         """
-        # FIXME: Ignore requirements without relationships! They will
-        #        result in nan and break this.
         return np.multiply(self.weight, self.satisfaction).sum()
 
     @property
@@ -194,9 +199,27 @@ class CODA(object):
         satisfaction of a requirement for a null relationship). This
         is the aggregate contribution of all characteristics for each
         requirement.
+
+        Raises
+        ------
+
+        ValueError
+            If any requirement has no relationships defined. Such a
+            requirement has zero total correlation, which would
+            otherwise yield a silent ``nan`` and poison the merit.
         """
         cf = self.correlation
         scf = cf.sum(axis=1)
+
+        unlinked = np.flatnonzero(scf == 0)
+        if unlinked.size:
+            names = ", ".join(
+                "'{}'".format(self.requirements[i].name) for i in unlinked
+            )
+            raise ValueError(
+                "Requirements have no relationships defined: {}".format(names)
+            )
+
         mv = self._merit()
         array = np.divide(np.multiply(mv, cf).sum(axis=1), scf)
         vector = array[:,np.newaxis]
@@ -338,9 +361,28 @@ class CODA(object):
         self.matrix[r,c] = cls(*args)
 
     def compare(self, other):
-        """Return True if the model matrix is the same as another's.
+        """Return True if this model is equivalent to another.
+
+        Two models are considered equivalent when they have the same
+        shape and every corresponding relationship in the matrix is
+        equal (see :meth:`CODARelationship.__eq__`).
+
+        Parameters
+        ----------
+
+        other : CODA
+            Model to compare against.
+
+        Returns
+        -------
+
+        bool
+            True if the models have matching shapes and all
+            corresponding relationships are equal, otherwise False.
         """
-        return self.matrix == other.matrix
+        if self.shape != other.shape:
+            return False
+        return bool((self.matrix == other.matrix).all())
 
     def _create_base_matrix(self):
         # Create an array sized by the shape of the coda model and
@@ -591,7 +633,16 @@ class CODARelationship(object):
         return 0.0
 
     def __eq__(self, other):
-        return (self.correlation == other.correlation and
+        """Return True if other is an equivalent relationship.
+
+        Relationships are equal only if they are of the same concrete
+        type (e.g. a maximising relationship is never equal to a
+        minimising one) with matching correlation and target.
+        """
+        if not isinstance(other, CODARelationship):
+            return NotImplemented
+        return (type(self) is type(other) and
+                self.correlation == other.correlation and
                 self.target == other.target)
 
 
@@ -695,6 +746,9 @@ class CODAOptimise(CODARelationship):
         return 1. / (1 + ((x - self.target) / self.tolerance)**2)
 
     def __eq__(self, other):
-        return (super(CODAOptimise, self).__eq__(other) and
-                self.tolerance == other.tolerance)
+        result = super(CODAOptimise, self).__eq__(other)
+        if result is NotImplemented or not result:
+            return result
+        # The base type check guarantees other is a CODAOptimise here.
+        return self.tolerance == other.tolerance
 

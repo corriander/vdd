@@ -999,7 +999,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.0" },
     { name = "platformdirs", specifier = ">=2.6.2" },
     { name = "pygsheets", specifier = ">=2.0.5,<3" },
-    { name = "typer", extras = ["all"], specifier = ">=0.12" },
+    { name = "typer", specifier = ">=0.12" },
     { name = "xlrd", specifier = ">=2.0,<3" },
 ]
 

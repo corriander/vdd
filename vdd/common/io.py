@@ -6,10 +6,8 @@ import os
 import platformdirs
 import pygsheets
 
-from .abstract import ABC
 
-
-class AbstractGSheet(ABC):
+class AbstractGSheet(abc.ABC):
 
     class InvalidSource(Exception): pass
 

@@ -15,7 +15,7 @@ dependencies = [
     "numpy>=1.26",
     "xlrd>=2.0,<3",
     "openpyxl>=3.0.10,<4",
-    "typer[all]>=0.12",
+    "typer>=0.12",
 ]
 
 [project.scripts]

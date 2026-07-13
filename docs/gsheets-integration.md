@@ -55,7 +55,7 @@ rolling:
 
     	from vdd.requirements import BinWM
 
-		binary_matrix = BinWM.from_google_sheets('MySpreadsheet')
+		binary_matrix = BinWM.from_google_sheet('MySpreadsheet')
 		
  3. If (1) was skipped, `BinWM` provides a prompt based approach to
 	populating the matrix:

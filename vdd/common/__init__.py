@@ -1,2 +1,2 @@
-from .abstract import ABC
+from abc import ABC
 from . import io
