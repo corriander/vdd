@@ -38,7 +38,14 @@ def coda(
             lo, hi = char.limits
             char.value = ((lo or 0.0) + (hi or 1.0)) / 2
 
-    console.print(f"Merit: {model.merit:.2f}")
+    try:
+        merit = model.merit
+        satisfactions = model.satisfaction[:, 0]
+    except ValueError as err:
+        console.print(f"[red]Error:[/red] {err}")
+        raise typer.Exit(code=1)
+
+    console.print(f"Merit: {merit:.2f}")
 
     table = Table(show_header=True, header_style="bold")
     table.add_column("Requirement")
@@ -46,7 +53,6 @@ def coda(
     table.add_column("Satisfaction")
 
     weights = model.weight[:, 0]
-    satisfactions = model.satisfaction[:, 0]
 
     for req, w, s in zip(model.requirements, weights, satisfactions):
         table.add_row(req.name, f"{w:.2f}", _bar(s))

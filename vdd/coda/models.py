@@ -139,9 +139,14 @@ class CODA(object):
         This is a value in the range [0.0, 1.0]. Note that this is a
         relative value and 50% merit can often represent a good
         mapping between requirements and characteristics.
+
+        Raises
+        ------
+
+        ValueError
+            If any requirement has no relationships defined (see
+            :attr:`satisfaction`).
         """
-        # FIXME: Ignore requirements without relationships! They will
-        #        result in nan and break this.
         return np.multiply(self.weight, self.satisfaction).sum()
 
     @property
@@ -194,9 +199,27 @@ class CODA(object):
         satisfaction of a requirement for a null relationship). This
         is the aggregate contribution of all characteristics for each
         requirement.
+
+        Raises
+        ------
+
+        ValueError
+            If any requirement has no relationships defined. Such a
+            requirement has zero total correlation, which would
+            otherwise yield a silent ``nan`` and poison the merit.
         """
         cf = self.correlation
         scf = cf.sum(axis=1)
+
+        unlinked = np.flatnonzero(scf == 0)
+        if unlinked.size:
+            names = ", ".join(
+                "'{}'".format(self.requirements[i].name) for i in unlinked
+            )
+            raise ValueError(
+                "Requirements have no relationships defined: {}".format(names)
+            )
+
         mv = self._merit()
         array = np.divide(np.multiply(mv, cf).sum(axis=1), scf)
         vector = array[:,np.newaxis]

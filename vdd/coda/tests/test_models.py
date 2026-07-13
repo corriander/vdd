@@ -495,6 +495,29 @@ class TestCODACaseStudy1:
     def test_merit(self):
         assert self.wheel.merit == pytest.approx(0.5788, abs=1e-4)
 
+    def test_merit__unlinked_requirement_raises(self):
+        """A requirement without relationships is a loud error.
+
+        Such a requirement has zero total correlation and would
+        otherwise produce a silent nan that poisons the merit.
+        """
+        self.wheel.add_requirement('Cost', 0.2)
+        with pytest.raises(ValueError) as excinfo:
+            _ = self.wheel.merit
+        msg = str(excinfo.value)
+        assert "no relationships defined" in msg
+        assert "'Cost'" in msg
+
+    def test_satisfaction__unlinked_requirements_named(self):
+        """All offending requirements are named in the error."""
+        self.wheel.add_requirement('Cost', 0.2)
+        self.wheel.add_requirement('Aesthetics', 0.2)
+        with pytest.raises(ValueError) as excinfo:
+            _ = self.wheel.satisfaction
+        msg = str(excinfo.value)
+        assert "'Cost'" in msg
+        assert "'Aesthetics'" in msg
+
     def test_sum_of_correlations(self):
         """Sum of correlation factors for all requirements."""
         np.testing.assert_array_almost_equal(
