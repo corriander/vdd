@@ -36,6 +36,12 @@ class GSheetsFacade(object):
         'gsheets_credentials.json'
     )
 
+    # If set, this environment variable is expected to contain the
+    # service-account JSON *content* (not a path). It takes precedence
+    # over the on-disk credentials file, which keeps the key off disk
+    # when injected by a secrets manager (e.g. varlock).
+    _credentials_env_var = 'VDD_GSHEETS_CREDENTIALS'
+
     def __init__(self, workbook_name):
         # We shouldn't really init the facade with a workbook name.
         # It's here to support the retention of the sheet, but perhaps
@@ -50,9 +56,16 @@ class GSheetsFacade(object):
         try:
             return self._cached_client
         except AttributeError:
-            self._cached_client = pygsheets.authorize(
-                service_account_file=self._credentials_path
-            )
+            if os.environ.get(self._credentials_env_var):
+                # pygsheets reads and json-decodes the env var content
+                # itself; we only hand it the variable name.
+                self._cached_client = pygsheets.authorize(
+                    service_account_env_var=self._credentials_env_var
+                )
+            else:
+                self._cached_client = pygsheets.authorize(
+                    service_account_file=self._credentials_path
+                )
             return self._cached_client
 
     @property

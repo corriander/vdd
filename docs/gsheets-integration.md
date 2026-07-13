@@ -22,6 +22,55 @@ the following
     handled.
 
 
+Environment-variable credentials
+---
+
+Instead of (or in addition to) the on-disk credentials file, you can
+supply the service-account key via the `VDD_GSHEETS_CREDENTIALS`
+environment variable. Its value is the service-account JSON *content*
+itself, not a path to a file.
+
+**Precedence**: if `VDD_GSHEETS_CREDENTIALS` is set (and non-empty),
+it is used and the on-disk file is ignored. If it is unset, `vdd`
+falls back to the credentials file described above.
+
+### varlock pattern (recommended)
+
+This repository ships a varlock `.env.schema` at its root declaring
+`VDD_GSHEETS_CREDENTIALS` as a sensitive, required secret sourced from
+1Password via the `op()` resolver. With it, the key is resolved and
+injected into the process environment only at run time, so it never
+sits on disk:
+
+    varlock run -- vdd coda ...
+    varlock run -- python your_script.py
+
+To use this:
+
+  - Install [varlock](https://varlock.dev/) yourself. It is developer
+    tooling and deliberately **not** a dependency of `vdd`.
+  - Edit the placeholder `op(op://<vault>/<item>/<field>)` reference in
+    `.env.schema` to point at the 1Password item holding your
+    service-account JSON.
+
+If you don't use varlock, you can export the variable directly, e.g.:
+
+    export VDD_GSHEETS_CREDENTIALS="$(cat gsheets_credentials.json)"
+
+### File-fallback path (a real trap)
+
+The fallback credentials file lives in
+`platformdirs.user_config_dir('vdd')`, which is **OS-dependent**:
+
+  - Linux: `~/.config/vdd/gsheets_credentials.json`
+  - macOS: `~/Library/Application Support/vdd/gsheets_credentials.json`
+
+The Twilio instructions (and the section above) mention the Linux
+path; on macOS the file belongs under `~/Library/Application Support`,
+not `~/.config`. Using the environment variable sidesteps this
+difference entirely.
+
+
 Jupyter
 ---
 
