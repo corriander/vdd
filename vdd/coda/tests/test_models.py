@@ -541,11 +541,11 @@ class TestCODACaseStudy1:
 class TestCODACompare:
     """Structural comparison of two CODA models."""
 
-    def _build(self, correlation='strong'):
+    def _build(self, correlation='strong', reltype='max'):
         model = models.CODA()
         model.add_requirement('Requirement', 1.0)
         model.add_characteristic('Characteristic', (0.0, 1.0), 0.5)
-        model.add_relationship('Requirement', 'Characteristic', 'max',
+        model.add_relationship('Requirement', 'Characteristic', reltype,
                                correlation, 1.0)
         return model
 
@@ -558,6 +558,12 @@ class TestCODACompare:
         """Differing relationship correlation compares unequal."""
         result = self._build('strong').compare(self._build('weak'))
         assert result is False
+
+    def test_different_relationship_type(self):
+        """A flipped relationship direction compares unequal."""
+        a = self._build(reltype='max')
+        b = self._build(reltype='min')
+        assert a.compare(b) is False
 
     def test_different_shape(self):
         """Models of differing shape compare unequal."""
@@ -705,6 +711,38 @@ class TestCODARelationship:
         self.inst.target = 0.0
         assert self.inst.target == 0.0
 
+    def test___eq____same_type(self):
+        """Same type with matching correlation and target is equal."""
+        a = models.CODAMaximise('strong', 5.0)
+        b = models.CODAMaximise('strong', 5.0)
+        assert a == b
+        assert not a != b
+
+    def test___eq____type_aware(self):
+        """A flipped relationship direction is not equal.
+
+        Maximising and minimising relationships with the same
+        correlation and target model opposite goals.
+        """
+        maximise = models.CODAMaximise('strong', 5.0)
+        minimise = models.CODAMinimise('strong', 5.0)
+        assert maximise != minimise
+        assert not maximise == minimise
+
+    def test___eq____zero_correlation_is_not_null(self):
+        """A zero-correlation relationship is not a null one."""
+        maximise = models.CODAMaximise('none', None)
+        null = models.CODANull()
+        assert maximise != null
+        assert null != maximise
+
+    def test___eq____non_relationship(self):
+        """Comparison with arbitrary objects is False, not an error."""
+        maximise = models.CODAMaximise('strong', 5.0)
+        assert maximise != object()
+        assert not maximise == 'a string'
+        assert maximise.__eq__(42) is NotImplemented
+
 
 class TestCODANull:
 
@@ -760,3 +798,14 @@ class TestCODAOptimise:
         assert inst(0.9) > 0.5
         assert inst(2.0) < 0.5
         assert inst(0.0) < 0.5
+
+    def test___eq____tolerance_aware(self):
+        """Equality extends the base contract with tolerance."""
+        a = models.CODAOptimise('strong', 5.0, tolerance=0.2)
+        assert a == models.CODAOptimise('strong', 5.0, tolerance=0.2)
+        assert a != models.CODAOptimise('strong', 5.0, tolerance=0.3)
+        # Type-awareness and graceful non-relationship handling are
+        # inherited from the base class.
+        assert a != models.CODAMaximise('strong', 5.0)
+        assert a != object()
+        assert a.__eq__(42) is NotImplemented

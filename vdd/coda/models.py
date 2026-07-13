@@ -633,7 +633,16 @@ class CODARelationship(object):
         return 0.0
 
     def __eq__(self, other):
-        return (self.correlation == other.correlation and
+        """Return True if other is an equivalent relationship.
+
+        Relationships are equal only if they are of the same concrete
+        type (e.g. a maximising relationship is never equal to a
+        minimising one) with matching correlation and target.
+        """
+        if not isinstance(other, CODARelationship):
+            return NotImplemented
+        return (type(self) is type(other) and
+                self.correlation == other.correlation and
                 self.target == other.target)
 
 
@@ -737,6 +746,9 @@ class CODAOptimise(CODARelationship):
         return 1. / (1 + ((x - self.target) / self.tolerance)**2)
 
     def __eq__(self, other):
-        return (super(CODAOptimise, self).__eq__(other) and
-                self.tolerance == other.tolerance)
+        result = super(CODAOptimise, self).__eq__(other)
+        if result is NotImplemented or not result:
+            return result
+        # The base type check guarantees other is a CODAOptimise here.
+        return self.tolerance == other.tolerance
 
