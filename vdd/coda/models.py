@@ -11,6 +11,7 @@ References
 """
 from operator import attrgetter
 import abc
+import json
 from collections.abc import Sequence
 
 import numpy as np
@@ -71,6 +72,79 @@ class CODA(object):
         parser = parser_class(path)
         model = cls()
         return cls._transfer_elements(model, parser)
+
+    @classmethod
+    def read_json(cls, path):
+        """Construct a CODA model from a native JSON file.
+
+        Parameters
+        ----------
+
+        path : str
+            Filesystem path to a JSON file previously written by
+            :meth:`to_json` (or any file matching that schema).
+
+        Returns
+        -------
+
+        CODA
+            Populated CODA model
+
+        See Also
+        --------
+
+        from_dict, to_json
+        """
+        with open(path) as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+
+    @classmethod
+    def from_dict(cls, data):
+        """Construct a CODA model from a plain-python dict.
+
+        This is the inverse of :meth:`to_dict`. The model is rebuilt
+        through the public ``add_requirement``/``add_characteristic``/
+        ``add_relationship`` API so that requirement weight
+        normalisation is replayed on this instance (rather than copying
+        element objects, whose weights are context-dependent).
+
+        Parameters
+        ----------
+
+        data : dict
+            Mapping with optional ``requirements``, ``characteristics``
+            and ``relationships`` keys, as produced by :meth:`to_dict`.
+
+        Returns
+        -------
+
+        CODA
+            Populated CODA model
+        """
+        model = cls()
+        for req in data.get('requirements', []):
+            model.add_requirement(
+                req['name'],
+                req['weight'],
+                normalise=req.get('normalise', True),
+            )
+        for char in data.get('characteristics', []):
+            limits = char.get('limits')
+            if limits is not None:
+                limits = tuple(limits)
+            model.add_characteristic(char['name'], limits,
+                                     char.get('value'))
+        for rel in data.get('relationships', []):
+            model.add_relationship(
+                rel['requirement'],
+                rel['characteristic'],
+                rel['type'],
+                rel['correlation'],
+                rel['target'],
+                rel.get('tolerance'),
+            )
+        return model
 
     @staticmethod
     def _transfer_elements(inst, source):
@@ -260,6 +334,33 @@ class CODA(object):
             cls(context=self, name=name, weight=weight),
         )
 
+    def add_requirements_from(self, binwm):
+        """Add requirements from a Binary Weighting Matrix.
+
+        One requirement is added per BinWM requirement, using its
+        relative score as the weight.
+
+        Parameters
+        ----------
+
+        binwm : vdd.requirements.models.BinWM
+            Source of requirement names and scores.
+
+        Notes
+        -----
+
+        ``BinWM.score`` sums to unity by construction, so the scores are
+        already-normalised weights. They are nonetheless added with
+        ``normalise=True`` (self-normalising requirements) so that
+
+          1. floating-point drift around unity cannot trip the
+             combined-weight guard in :meth:`add_requirement`, and
+          2. further requirements can be mixed in afterwards, with the
+             whole set re-normalising automatically.
+        """
+        for name, score in zip(binwm.requirements, binwm.score):
+            self.add_requirement(name, float(score), normalise=True)
+
     def add_characteristic(self, name, limits=None, value=None):
         """Add a characteristic to the model.
 
@@ -336,6 +437,122 @@ class CODA(object):
 
         cls, args = relationships[reltype]
         self.matrix[r,c] = cls(*args)
+
+    def to_dict(self):
+        """Serialise the model to a plain-python dict.
+
+        The schema is flat and human/diff-friendly::
+
+            {
+              "requirements": [
+                {"name": ..., "weight": ..., "normalise": bool}
+              ],
+              "characteristics": [
+                {"name": ..., "limits": [lo, hi], "value": ...}
+              ],
+              "relationships": [
+                {"requirement": ..., "characteristic": ...,
+                 "type": "min"|"max"|"opt", "correlation": ...,
+                 "target": ..., "tolerance": ...}
+              ]
+            }
+
+        Only non-null relationships are emitted. For requirements the
+        *raw* weight is stored (``base_weight`` for self-normalising
+        requirements, otherwise the pre-normalised weight) alongside the
+        ``normalise`` flag, so :meth:`from_dict` can replay
+        normalisation faithfully. ``limits`` elements and ``value`` may
+        be ``None``; ``tolerance`` is ``None`` for non-optimising
+        relationships.
+
+        Returns
+        -------
+
+        dict
+        """
+        requirements = []
+        for req in self.requirements:
+            if isinstance(req, CODARequirementNorm):
+                requirements.append({
+                    'name': req.name,
+                    'weight': req.base_weight,
+                    'normalise': True,
+                })
+            else:
+                requirements.append({
+                    'name': req.name,
+                    'weight': req.weight,
+                    'normalise': False,
+                })
+
+        characteristics = []
+        for char in self.characteristics:
+            try:
+                value = char.value
+            except AttributeError:
+                value = None
+            characteristics.append({
+                'name': char.name,
+                'limits': list(char.limits),
+                'value': value,
+            })
+
+        type_by_cls = {
+            CODAMaximise: 'max',
+            CODAMinimise: 'min',
+            CODAOptimise: 'opt',
+        }
+        matrix = self.matrix
+        relationships = []
+        for i, req in enumerate(self.requirements):
+            for j, char in enumerate(self.characteristics):
+                rel = matrix[i, j]
+                reltype = type_by_cls.get(type(rel))
+                if reltype is None:
+                    # CODANull (or any non-modelled relationship).
+                    continue
+                relationships.append({
+                    'requirement': req.name,
+                    'characteristic': char.name,
+                    'type': reltype,
+                    'correlation': rel.correlation,
+                    'target': rel.target,
+                    'tolerance': (rel.tolerance if reltype == 'opt'
+                                  else None),
+                })
+
+        return {
+            'requirements': requirements,
+            'characteristics': characteristics,
+            'relationships': relationships,
+        }
+
+    def to_json(self, path=None):
+        """Serialise the model to JSON.
+
+        Parameters
+        ----------
+
+        path : str, optional
+            If given, the JSON is written to this file. Otherwise the
+            JSON is returned as a string.
+
+        Returns
+        -------
+
+        str or None
+            The JSON string when ``path`` is ``None``, else ``None``.
+
+        See Also
+        --------
+
+        to_dict, read_json
+        """
+        text = json.dumps(self.to_dict(), indent=2)
+        if path is None:
+            return text
+        with open(path, 'w') as f:
+            f.write(text)
 
     def compare(self, other):
         """Return True if the model matrix is the same as another's.

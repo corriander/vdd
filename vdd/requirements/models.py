@@ -1,6 +1,7 @@
 from __future__ import division
 
 import itertools
+import json
 import random
 import warnings
 
@@ -39,6 +40,50 @@ class BinWM(object):
         default_matrix = np.zeros([len(args), len(args)])
         matrix = kwargs.get('matrix', default_matrix)
         self._matrix = matrix
+
+    @classmethod
+    def from_dict(cls, data):
+        """Construct a BinWM from a plain-python dict.
+
+        This is the inverse of :meth:`to_dict` and consumes the same
+        shape as the JSON test fixtures::
+
+            {"requirements": [...], "binary_matrix": [[...]]}
+
+        Parameters
+        ----------
+
+        data : dict
+            Mapping with ``requirements`` (list of names) and
+            ``binary_matrix`` (2D list) keys.
+
+        Returns
+        -------
+
+        BinWM
+        """
+        return cls(*data['requirements'],
+                   matrix=np.array(data['binary_matrix']))
+
+    @classmethod
+    def read_json(cls, path):
+        """Construct a BinWM from a native JSON file.
+
+        Parameters
+        ----------
+
+        path : str
+            Filesystem path to a JSON file matching the
+            :meth:`to_dict` schema.
+
+        Returns
+        -------
+
+        BinWM
+        """
+        with open(path) as f:
+            data = json.load(f)
+        return cls.from_dict(data)
 
     @classmethod
     def from_google_sheet(cls, workbook_name):
@@ -161,6 +206,46 @@ class BinWM(object):
             )
 
         sheet.update(self.to_dataframe())
+
+    def to_dict(self):
+        """Serialise to a plain-python dict.
+
+        The shape matches the JSON test fixtures, so serialised output
+        is a valid interchange file::
+
+            {"requirements": [...], "binary_matrix": [[...]]}
+
+        Returns
+        -------
+
+        dict
+        """
+        return {
+            'requirements': list(self.requirements),
+            'binary_matrix': self.matrix.astype(int).tolist(),
+        }
+
+    def to_json(self, path=None):
+        """Serialise to JSON.
+
+        Parameters
+        ----------
+
+        path : str, optional
+            If given, the JSON is written to this file. Otherwise the
+            JSON is returned as a string.
+
+        Returns
+        -------
+
+        str or None
+            The JSON string when ``path`` is ``None``, else ``None``.
+        """
+        text = json.dumps(self.to_dict(), indent=2)
+        if path is None:
+            return text
+        with open(path, 'w') as f:
+            f.write(text)
 
     def to_dataframe(self):
         """Convert to a pandas dataframe.
