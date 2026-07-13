@@ -361,9 +361,28 @@ class CODA(object):
         self.matrix[r,c] = cls(*args)
 
     def compare(self, other):
-        """Return True if the model matrix is the same as another's.
+        """Return True if this model is equivalent to another.
+
+        Two models are considered equivalent when they have the same
+        shape and every corresponding relationship in the matrix is
+        equal (see :meth:`CODARelationship.__eq__`).
+
+        Parameters
+        ----------
+
+        other : CODA
+            Model to compare against.
+
+        Returns
+        -------
+
+        bool
+            True if the models have matching shapes and all
+            corresponding relationships are equal, otherwise False.
         """
-        return self.matrix == other.matrix
+        if self.shape != other.shape:
+            return False
+        return bool((self.matrix == other.matrix).all())
 
     def _create_base_matrix(self):
         # Create an array sized by the shape of the coda model and

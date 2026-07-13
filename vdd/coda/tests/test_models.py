@@ -538,6 +538,36 @@ class TestCODACaseStudy1:
         assert self.wheel.merit == model.merit
 
 
+class TestCODACompare:
+    """Structural comparison of two CODA models."""
+
+    def _build(self, correlation='strong'):
+        model = models.CODA()
+        model.add_requirement('Requirement', 1.0)
+        model.add_characteristic('Characteristic', (0.0, 1.0), 0.5)
+        model.add_relationship('Requirement', 'Characteristic', 'max',
+                               correlation, 1.0)
+        return model
+
+    def test_equal_models(self):
+        """Identically constructed models compare equal."""
+        result = self._build().compare(self._build())
+        assert result is True
+
+    def test_different_correlation(self):
+        """Differing relationship correlation compares unequal."""
+        result = self._build('strong').compare(self._build('weak'))
+        assert result is False
+
+    def test_different_shape(self):
+        """Models of differing shape compare unequal."""
+        a = self._build()
+        b = self._build()
+        b.add_requirement('Extra', 1.0)
+        assert a.compare(b) is False
+        assert b.compare(a) is False
+
+
 class TestCODACharacteristic:
 
     @pytest.fixture(autouse=True)
