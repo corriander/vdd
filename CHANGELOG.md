@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.4](https://github.com/corriander/vdd/compare/v3.0.3...v3.0.4) (2026-07-24)
+
+
+### Bug Fixes
+
+* **deps:** bump platformdirs from 4.10.0 to 4.10.1 ([4e24875](https://github.com/corriander/vdd/commit/4e248754e0f68eadb2db8b39ffe77eb814b1804c))
+
 ## [3.0.3](https://github.com/corriander/vdd/compare/v3.0.2...v3.0.3) (2026-07-13)
 
 
