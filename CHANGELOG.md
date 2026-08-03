@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.1.0](https://github.com/corriander/vdd/compare/v3.0.3...v3.1.0) (2026-08-03)
+
+
+### Features
+
+* **io:** env-var credentials for Google Sheets (varlock-friendly) ([9123413](https://github.com/corriander/vdd/commit/9123413c8a8709a8cae683aff3528c4e7ef4c04e))
+* native JSON model I/O and BinWM→CODA glue ([#46](https://github.com/corriander/vdd/issues/46)) ([e62ed24](https://github.com/corriander/vdd/commit/e62ed240773d36997c5b32092078190dc23389a2))
+
+
+### Bug Fixes
+
+* **deps:** bump cryptography from 48.0.1 to 50.0.0 ([efb42ce](https://github.com/corriander/vdd/commit/efb42cea2449218fb4112dd8333152228d00c206))
+* **deps:** bump httplib2 from 0.31.2 to 0.32.0 ([5a34aed](https://github.com/corriander/vdd/commit/5a34aedc4099e168f2ff5eefaf0b25ffe48739c1))
+* **deps:** bump pandas from 3.0.3 to 3.0.5 ([d63b4a4](https://github.com/corriander/vdd/commit/d63b4a4257ed1fbde9a1da4ac0ba7ee8f30a0657))
+* **deps:** bump platformdirs from 4.10.0 to 4.10.1 ([4e24875](https://github.com/corriander/vdd/commit/4e248754e0f68eadb2db8b39ffe77eb814b1804c))
+* **deps:** bump platformdirs from 4.10.1 to 4.11.0 ([7c17130](https://github.com/corriander/vdd/commit/7c1713062e3afadcf44c91d73e66f75b3487e2a0))
+* **deps:** bump pyasn1 from 0.6.3 to 0.6.4 ([39eb2cb](https://github.com/corriander/vdd/commit/39eb2cb102d04a064aded75a6286d828d88deb8c))
+* **deps:** bump typer from 0.24.1 to 0.27.0 ([ee5cae9](https://github.com/corriander/vdd/commit/ee5cae9782726d6b1fd403f5dcd9e998cca31771))
+
+
+### Documentation
+
+* pin 1password-plugin 2.0.0, note varlock version requirement ([df15882](https://github.com/corriander/vdd/commit/df158826b0db82a64c15aaca3b14264c07e20019))
+
 ## [3.0.3](https://github.com/corriander/vdd/compare/v3.0.2...v3.0.3) (2026-07-13)
 
 
