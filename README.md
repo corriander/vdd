@@ -22,6 +22,8 @@ Features
   - Requirements weighting with a Binary Weighting Matrix
   - Programmatic or Spreadsheet based model creation (via Excel
     workbooks or Google Sheets).
+  - Native JSON serialisation for both CODA models and Binary
+    Weighting Matrices (human-readable, git-diff-friendly).
   - Command-line interface for quick model inspection and interactive weighting
 
 
@@ -57,6 +59,37 @@ normalised scores:
 
 Questions are shuffled by default. Pass `--no-shuffle` to work through them
 in a fixed order.
+
+
+JSON model i/o
+--------------
+
+Both CODA models and Binary Weighting Matrices serialise to and from a
+flat, human-readable JSON format. This is handy for version-controlling
+models or moving them between the two tools.
+
+```python
+from vdd.coda.models import CODA
+from vdd.requirements.models import BinWM
+
+# Weight requirements with a binary weighting matrix, then persist it.
+bwm = BinWM('Stiffness', 'Friction', 'Weight')
+bwm.prompt()
+bwm.to_json('weights.json')
+
+# Seed a CODA model directly from the weighting matrix scores.
+coda = CODA()
+coda.add_requirements_from(bwm)
+
+# Round-trip a CODA model through JSON.
+coda.to_json('model.json')
+reloaded = CODA.read_json('model.json')
+```
+
+`to_json()` returns a string when no path is given. `to_dict()` /
+`from_dict()` expose the same data as plain-python dicts. The BinWM
+format (`{"requirements": [...], "binary_matrix": [[...]]}`) is the
+same shape used by the bundled example fixtures.
 
 
 Documentation

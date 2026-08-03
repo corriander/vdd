@@ -1,4 +1,5 @@
 """vdd command-line interface."""
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -11,6 +12,33 @@ requirements_app = typer.Typer(help="Requirements weighting tools.")
 app.add_typer(requirements_app, name="requirements")
 
 console = Console()
+
+
+def _force_utf8_stdio() -> None:
+    """Make stdout/stderr capable of encoding what we render.
+
+    Tables and bars use box-drawing and block characters. On Windows a
+    redirected or piped stream defaults to the locale encoding (cp1252),
+    which can't represent them, so `vdd coda model.xlsx > out.txt` dies
+    with UnicodeEncodeError. An interactive console is already UTF-8, so
+    this only bites when the output is captured.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        encoding = getattr(stream, 'encoding', None) or ''
+        if encoding.lower().replace('-', '') == 'utf8':
+            continue
+        try:
+            stream.reconfigure(encoding='utf-8')
+        except (AttributeError, OSError):
+            # Not a reconfigurable TextIOWrapper (e.g. replaced by a
+            # test harness). Leave it alone rather than fail here.
+            pass
+
+
+@app.callback()
+def main() -> None:
+    """Value-Driven Design tools."""
+    _force_utf8_stdio()
 
 
 def _bar(value: float, width: int = 10) -> str:

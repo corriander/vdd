@@ -129,6 +129,61 @@ class TestBinWM:
             bwm.save()
 
 
+class TestBinWMJSON:
+    """Native JSON serialisation for BinWM.
+
+    The interchange shape matches the ``case__*.json`` test fixtures,
+    so those fixtures are themselves valid interchange files.
+    """
+
+    def test_from_dict(self):
+        data = get_fixture_data('case__simple_aircraft.json')
+        bwm = models.BinWM.from_dict(data)
+
+        assert list(bwm.requirements) == data['requirements']
+        np.testing.assert_array_equal(
+            bwm.matrix, np.array(data['binary_matrix'])
+        )
+
+    def test_to_dict_matches_fixture(self):
+        data = get_fixture_data('case__minimal_example.json')
+        bwm = models.BinWM.from_dict(data)
+
+        assert bwm.to_dict() == {
+            'requirements': data['requirements'],
+            'binary_matrix': data['binary_matrix'],
+        }
+
+    def test_roundtrip_dict(self):
+        data = get_fixture_data('case__motorcycle_helmet.json')
+        bwm = models.BinWM.from_dict(data)
+
+        clone = models.BinWM.from_dict(bwm.to_dict())
+
+        assert clone.requirements == bwm.requirements
+        np.testing.assert_array_equal(clone.matrix, bwm.matrix)
+        np.testing.assert_allclose(clone.score, bwm.score)
+
+    def test_roundtrip_json_file(self, tmp_path):
+        data = get_fixture_data('case__minimal_example.json')
+        bwm = models.BinWM.from_dict(data)
+
+        path = tmp_path / 'bwm.json'
+        assert bwm.to_json(str(path)) is None
+        clone = models.BinWM.read_json(str(path))
+
+        assert clone.requirements == bwm.requirements
+        np.testing.assert_array_equal(clone.matrix, bwm.matrix)
+
+    def test_read_json_fixture_directly(self):
+        """Existing case fixtures load straight through read_json."""
+        path = os.path.join(FIXTURES_DIR, 'case__simple_aircraft.json')
+        bwm = models.BinWM.read_json(path)
+
+        assert len(bwm.requirements) == 9
+        assert bwm.matrix.shape == (9, 9)
+
+
 class TestBinWM_GoogleSheetsIntegration:
 
     @pytest.fixture(autouse=True)
