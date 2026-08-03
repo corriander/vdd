@@ -95,7 +95,7 @@ class CODA(object):
 
         from_dict, to_json
         """
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             data = json.load(f)
         return cls.from_dict(data)
 
@@ -574,7 +574,7 @@ class CODA(object):
         text = json.dumps(self.to_dict(), indent=2)
         if path is None:
             return text
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf-8') as f:
             f.write(text)
 
     def compare(self, other):

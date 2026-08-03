@@ -675,6 +675,32 @@ class TestCODAJSONRoundTrip:
         clone = models.CODA.read_json(str(path))
         self._assert_equivalent(wheel, clone)
 
+    def test_roundtrip_json_file_with_non_ascii_names(self, tmp_path):
+        """Model files are UTF-8 regardless of the platform locale.
+
+        Element names are free text. Reading with the (Windows) locale
+        default of cp1252 would fail on a UTF-8 file, so the encoding is
+        pinned explicitly at both ends.
+        """
+        model = models.CODA()
+        model.add_requirement('Rigidité', 1.0)
+        model.add_characteristic('Épaisseur', (0.0, 10.0), 5.0)
+        model.add_relationship('Rigidité', 'Épaisseur', 'max',
+                               'strong', 8.0)
+
+        path = tmp_path / 'accented.json'
+        model.to_json(str(path))
+        # Hand-written UTF-8 (non-escaped) must also load.
+        path.write_text(
+            json.dumps(model.to_dict(), indent=2, ensure_ascii=False),
+            encoding='utf-8',
+        )
+        clone = models.CODA.read_json(str(path))
+
+        assert [r.name for r in clone.requirements] == ['Rigidité']
+        assert [c.name for c in clone.characteristics] == ['Épaisseur']
+        assert clone.merit == pytest.approx(model.merit)
+
     def test_roundtrip_optimise_and_unset_values(self):
         """Optimise tolerance and unset characteristic values survive."""
         model = models.CODA()
