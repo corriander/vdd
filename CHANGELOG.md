@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/corriander/vdd/compare/v3.1.0...v3.1.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **deps:** bump typer from 0.27.0 to 0.27.1 ([7f87643](https://github.com/corriander/vdd/commit/7f87643ffe08b2d5e7e1170c3f21a79d640de6ed))
+
 ## [3.1.0](https://github.com/corriander/vdd/compare/v3.0.3...v3.1.0) (2026-08-03)
 
 
