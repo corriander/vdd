@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.1.1](https://github.com/corriander/vdd/compare/v3.1.0...v3.1.1) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** bump certifi from 2026.2.25 to 2026.10.19 ([68d94de](https://github.com/corriander/vdd/commit/68d94dee7a35c2bee4cc746e1ff0f465af0bc91f))
+* **deps:** bump oauthlib from 3.3.1 to 4.0.0 ([ca7d73e](https://github.com/corriander/vdd/commit/ca7d73ec303a5d7495164f40bb1f4d27247267e4))
+* **deps:** bump pandas from 3.0.5 to 3.0.6 ([223234c](https://github.com/corriander/vdd/commit/223234c5e83f1006bdca16d5a9a1c080e87b8845))
+* **deps:** bump platformdirs from 4.11.0 to 4.11.12 ([3475b78](https://github.com/corriander/vdd/commit/3475b788aec30176daddbce91285082f24f60889))
+* **deps:** bump pyasn1 from 0.6.4 to 0.6.5 ([e61ecd2](https://github.com/corriander/vdd/commit/e61ecd2072f6fa431622faf1b4be4c95a3325ce9))
+* **deps:** bump typer from 0.27.0 to 0.27.1 ([7f87643](https://github.com/corriander/vdd/commit/7f87643ffe08b2d5e7e1170c3f21a79d640de6ed))
+* **deps:** bump typer from 0.27.1 to 0.27.2 ([5f35127](https://github.com/corriander/vdd/commit/5f35127979ec0f74352d696b4eb99818b9c36e8e))
+* **deps:** bump urllib3 from 2.7.0 to 2.8.0 ([914373f](https://github.com/corriander/vdd/commit/914373f2b998afb4d5bf13082c7c4da667a3c534))
+
 ## [3.1.0](https://github.com/corriander/vdd/compare/v3.0.3...v3.1.0) (2026-08-03)
 
 
